@@ -17,21 +17,12 @@ POP3_SERVER = "pop3s.aruba.it"
 POP3_PORT = 995
 
 # Control Features
-ENABLE_LINK_CONVERSION = True
 DELETE_EMAILS_AFTER_PROCESSING = False
 
 def extract_expose_links(email_body):
     """Extract unique expose links from the email body."""
-    pattern = re.compile(r"https:\/\/[a-zA-Z0-9./?=&_-]*expose/[a-zA-Z0-9]+")
+    pattern = re.compile(r"https:\/\/[a-zA-Z0-9./?=&_-]*expose/(\d+)")
     return list(set(pattern.findall(email_body)))
-
-def convert_link(link):
-    """Convert expose link to the desired format."""
-    match = re.search(r"expose/(\d+)", link)
-    if match:
-        expose_id = match.group(1)
-        return f"https://www.immobilienscout24.de/expose/{expose_id}#/"
-    return link
 
 def get_email_body(email_message: EmailMessage):
     """Extract the body of the email in plain text."""
@@ -63,20 +54,34 @@ def fetch_emails():
                 body = get_email_body(email_message)
 
                 if body:
-                    expose_links = extract_expose_links(body)
-                    if ENABLE_LINK_CONVERSION:
-                        expose_links = [convert_link(link) for link in expose_links]
+                    expose_ids = extract_expose_links(body)
 
-                    for link in expose_links:
-                        expose_id = re.search(r"expose/(\d+)", link).group(1)
-                        
+                    # Process expose IDs
+                    for expose_id in expose_ids:
                         # Check if the expose already exists in the DB
                         if not expose_exists(expose_id):
-                            insert_expose((expose_id, subject, None, None, None, None))
+                            data = (
+                                expose_id,  # Expose ID
+                                None,       # Title from email subject
+                                None,       # Price Kalt
+                                None,       # Price Warm
+                                None,       # Location
+                                None,       # Size
+                                None,       # Number of Rooms
+                                None,       # Agent Name
+                                None,       # Real Estate Agency
+                                None,       # Energetic Rating
+                                None,       # Construction Year
+                                None,       # Description
+                                None,       # Neighborhood
+                                0           # Processed (default)
+                            )
+
+                            insert_expose(data)
                             print(f"Inserted expose {expose_id} into the database.")
                         else:
                             print(f"Expose {expose_id} already exists.")
-
+                    
                     if DELETE_EMAILS_AFTER_PROCESSING:
                         mailbox.dele(i+1)
                         print(f"Deleted email with subject: {subject}")

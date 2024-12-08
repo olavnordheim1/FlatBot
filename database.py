@@ -35,19 +35,20 @@ def init_db():
         print("Database already exists.")
 
 def insert_expose(data):
+    """Insert a new expose into the database."""
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     try:
         cursor.execute("""
             INSERT INTO exposes (
-                expose_id, title, price_kalt, price_warm, location, size, 
-                number_of_rooms, agent_name, real_estate_agency, energetic_rating, 
-                construction_year, description, neighborhood, processed
-            ) 
+                expose_id, title, price_kalt, price_warm, location, size, number_of_rooms,
+                agent_name, real_estate_agency, energetic_rating, construction_year, 
+                description, neighborhood, processed
+            )
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, data)
         conn.commit()
-        print(f"Inserted expose {data[0]} into the database.")
+        print(f"Expose {data[0]} inserted successfully.")
     except sqlite3.IntegrityError:
         print(f"Expose {data[0]} already exists in the database.")
     conn.close()
