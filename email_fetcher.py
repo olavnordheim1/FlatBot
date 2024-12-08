@@ -5,6 +5,7 @@ import re
 from email import parser
 from email.message import EmailMessage
 from dotenv import load_dotenv
+from database import insert_expose, expose_exists
 
 # Load environment variables
 load_dotenv()
@@ -15,8 +16,9 @@ EMAIL_PASSWORD = base64.b64decode(os.getenv("EMAIL_PASSWORD")).decode("utf-8")
 POP3_SERVER = "pop3s.aruba.it"
 POP3_PORT = 995
 
-# Enable or disable link conversion
+# Control Features
 ENABLE_LINK_CONVERSION = True
+DELETE_EMAILS_AFTER_PROCESSING = False
 
 def extract_expose_links(email_body):
     """Extract unique expose links from the email body."""
@@ -37,57 +39,51 @@ def get_email_body(email_message: EmailMessage):
         for part in email_message.walk():
             content_type = part.get_content_type()
             content_disposition = str(part.get("Content-Disposition"))
-
             if content_type == "text/plain" and "attachment" not in content_disposition:
                 return part.get_payload(decode=True).decode("utf-8", errors="ignore")
     else:
         return email_message.get_payload(decode=True).decode("utf-8", errors="ignore")
     return None
 
-def receive_emails():
+def fetch_emails():
     try:
-        # Connect to the server
         mailbox = poplib.POP3_SSL(POP3_SERVER, POP3_PORT)
         mailbox.user(EMAIL_USER)
         mailbox.pass_(EMAIL_PASSWORD)
 
-        # Get email stats
         num_messages = len(mailbox.list()[1])
         print(f"Found {num_messages} emails.")
 
         if num_messages > 0:
-            # Loop through all messages
             for i in range(num_messages):
-                # Retrieve the email
                 raw_email = b"\n".join(mailbox.retr(i+1)[1])
                 email_message = parser.Parser().parsestr(raw_email.decode("utf-8"))
 
-                # Extract subject and body
                 subject = email_message["Subject"]
                 body = get_email_body(email_message)
 
                 if body:
-                    # Extract expose links
                     expose_links = extract_expose_links(body)
-                    
-                    if expose_links:
-                        print(f"Found {len(expose_links)} unique expose link(s):")
-                        for link in expose_links:
-                            if ENABLE_LINK_CONVERSION:
-                                link = convert_link(link)
-                            print(f" - {link}")
-                        # Delete the email after processing
-                        #mailbox.dele(i+1)
-                    else:
-                        print(f"No expose links found in email with subject: {subject}")
+                    if ENABLE_LINK_CONVERSION:
+                        expose_links = [convert_link(link) for link in expose_links]
+
+                    for link in expose_links:
+                        expose_id = re.search(r"expose/(\d+)", link).group(1)
+                        
+                        # Check if the expose already exists in the DB
+                        if not expose_exists(expose_id):
+                            insert_expose((expose_id, subject, None, None, None, None))
+                            print(f"Inserted expose {expose_id} into the database.")
+                        else:
+                            print(f"Expose {expose_id} already exists.")
+
+                    if DELETE_EMAILS_AFTER_PROCESSING:
+                        mailbox.dele(i+1)
+                        print(f"Deleted email with subject: {subject}")
                 else:
                     print(f"Email with subject '{subject}' has no readable body.")
 
-        # Quit mailbox
         mailbox.quit()
 
     except Exception as e:
         print("Error:", str(e))
-
-if __name__ == "__main__":
-    receive_emails()
