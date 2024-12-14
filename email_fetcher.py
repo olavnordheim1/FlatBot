@@ -87,14 +87,12 @@ def fetch_emails():
                                 print(f"Inserted expose {expose_id} into the database with source '{source}'.")
                             else:
                                 print(f"Expose {expose_id} already exists.")
-                    else:
-                        print(f"Email with subject '{subject}' has no readable body.")
+                        if DELETE_EMAILS_AFTER_PROCESSING:
+                            mailbox.dele(i+1)
+                            print(f"Deleted email with subject: {subject}")
                 else:
                     print(f"Email with subject '{subject}' has no readable body.")
 
-                if DELETE_EMAILS_AFTER_PROCESSING:
-                    mailbox.dele(i+1)
-                    print(f"Deleted email with subject: {subject}")
 
         mailbox.quit()
 
