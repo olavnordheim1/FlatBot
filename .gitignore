@@ -5,8 +5,8 @@ __pycache__/
 *.pyo
 .DS_Store
 flats.db
-cookies/
-*.pkl
+#cookies/
+#*.pkl
 *.png
 SikuliX/
 Chrome installers
