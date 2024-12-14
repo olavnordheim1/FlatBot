@@ -1,0 +1,10 @@
+Immoscout
+
+Window titles
+Page title: Ich bin kein Roboter - ImmobilienScout24
+Page title: Angebot nicht gefunden - ImmobilienScout24
+Page title: Angebot wurde deaktiviert - Dienstagsbesichtigung, 10.12.24, 13.30-14.00 Uhr - Donaustraße - Bitte Hausnr. per Mail erfragen!
+Page title: Exklusives Reihenhaus in Grunewald- Stilvoll saniert
+Page title login: Welcome - ImmobilienScout24 
+Page title: Fehler - ImmobilienScout24 - ImmobilienScout24
+Page title: ImmoScout24 – Die Nr. 1 für Immobilien
