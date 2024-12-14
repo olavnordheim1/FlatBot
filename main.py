@@ -1,6 +1,6 @@
 from database import init_db
 from email_fetcher import fetch_emails
-from process_expose import process_all_exposes
+from process_exposes import process_all_exposes
 
 def main():
     print("Initializing the database...")

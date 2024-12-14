@@ -40,6 +40,9 @@ def get_stealth_browser():
     driver.maximize_window()
     return driver
 
+def kill_stealth_browser(driver):
+    driver.quit()
+
 def random_wait(min_seconds=2, max_seconds=5):
     wait_time = random.uniform(min_seconds, max_seconds)
     print(f"Waiting for {wait_time:.2f} seconds...")

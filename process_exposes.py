@@ -2,7 +2,7 @@ import os
 import time
 import importlib
 import stealth_browser
-from database import get_unprocessed_exposes, update_expose, mark_expose_as_processed
+from database import get_unprocessed_exposes
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 
