@@ -2,9 +2,7 @@ import os
 import time
 import importlib
 import modules.StealthBrowser as StealthBrowser
-from modules.Database import get_unprocessed_exposes
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.action_chains import ActionChains
+from modules.Database import Database
 
 def process_all_exposes():
     exposes = get_unprocessed_exposes()

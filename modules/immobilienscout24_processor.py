@@ -11,9 +11,19 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from dotenv import load_dotenv
 
+
+
+
 class immobilienscout24_processor(BaseExposeProcessor):
     def __init__(self, email, password, application_text):
-        super().__init__(email, password, application_text)
+
+        # Load environment variables
+        load_dotenv()
+        IMMO_EMAIL = base64.b64decode(os.getenv("IMMO_EMAIL")).decode("utf-8")
+        IMMO_PASSWORD = base64.b64decode(os.getenv("IMMO_PASSWORD")).decode("utf-8")
+        APPLICATION_TEXT = os.getenv("APPLICATION_TEXT")
+
+        super().__init__(IMMO_EMAIL, IMMO_PASSWORD, APPLICATION_TEXT)
         self.name = "immobilienscout24"
         self.domain = "immobilienscout24.de"
         self.immo_page_titles = {
