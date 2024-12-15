@@ -23,11 +23,24 @@ class EmailFetcher:
         # Control Features
         self.delete_emails_after_processing = os.getenv("DELETE_EMAILS_AFTER_PROCESSING", "False").lower() == "true"
 
+        # Debugging
+        self.debug_enabled = False
+
         # Load processors dynamically
         self.processors = self.load_processors()
 
         # Filter Keywords
         self.subject_filter = [keyword.strip() for keyword in os.getenv("SUBJECT_FILTER", "").split(",")]
+
+    def enable_debug(self):
+        self.debug_enabled = True
+
+    def disable_debug(self):
+        self.debug_enabled = False
+
+    def debug(self, message):
+        if self.debug_enabled:
+            print(message)
 
     def load_processors(self):
         processors = {}
@@ -64,7 +77,7 @@ class EmailFetcher:
             mailbox.pass_(self.email_password)
 
             num_messages = len(mailbox.list()[1])
-            print(f"Found {num_messages} emails.")
+            self.debug(f"Found {num_messages} emails.")
 
             if num_messages > 0:
                 for i in range(num_messages):
@@ -77,7 +90,7 @@ class EmailFetcher:
                     # Check subject filter before processing
                     subject_lower = subject.lower()
                     if not any(keyword in subject_lower for keyword in self.subject_filter):
-                        print(f"Email with subject '{subject}' does not match filter keywords.")
+                        self.debug(f"Email with subject '{subject}' does not match filter keywords.")
                         continue
 
                     body = self.get_email_body(email_message)
@@ -93,17 +106,17 @@ class EmailFetcher:
                                                 source=processor.get_name()
                                             )
                                             self.db.insert_expose(new_expose)
-                                            print(f"Inserted expose {expose_id} into the database with source '{processor.get_name()}'.")
+                                            self.debug(f"Inserted expose {expose_id} into the database with source '{processor.get_name()}'.")
                                         else:
-                                            print(f"Expose {expose_id} already exists.")
+                                            self.debug(f"Expose {expose_id} already exists.")
                                     if self.delete_emails_after_processing:
                                         mailbox.dele(i+1)
-                                        print(f"Deleted email with subject: {subject}")
+                                        self.debug(f"Deleted email with subject: {subject}")
                                 break
                     else:
-                        print(f"Email with subject '{subject}' has no readable body.")
+                        self.debug(f"Email with subject '{subject}' has no readable body.")
 
             mailbox.quit()
 
         except Exception as e:
-            print("Error:", str(e))
+            self.debug(f"Error: {str(e)}")
