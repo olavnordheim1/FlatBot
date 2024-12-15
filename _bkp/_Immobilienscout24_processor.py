@@ -33,7 +33,7 @@ def extract_expose_link(self, subject, email_body):
     return list(set(pattern.findall(email_body)))
 
 
-def generate_expose_link(expose):
+def _generate_expose_link(expose):
     expose_id = expose['expose_id']
     offer_link = f"https://push.search.is24.de/email/expose/{expose_id}"
     return offer_link
