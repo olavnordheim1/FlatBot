@@ -26,6 +26,8 @@ class immobilienscout24_processor(BaseExposeProcessor):
         super().__init__(IMMO_EMAIL, IMMO_PASSWORD, APPLICATION_TEXT)
         self.name = "immobilienscout24"
         self.domain = "immobilienscout24.de"
+        # Filter Keywords
+        self.subject_keywords = {"angebot", "offer"}
         self.immo_page_titles = {
             "cookie_wall": "Ich bin kein Roboter",
             "offer_expired": "Angebot nicht gefunden4",
@@ -35,8 +37,19 @@ class immobilienscout24_processor(BaseExposeProcessor):
             "home_page": "ImmoScout24 – Die Nr. 1 für Immobilien"
         }
 
-    def extract_expose_link(email_body):
+    def extract_expose_link(self, subject, email_body):
         """Extract unique expose links from the email body specific to Immobilienscout24."""
+
+        # Normalize keywords to lowercase for consistent matching
+        subject_keywords = {keyword.lower() for keyword in self.subject_keywords}
+
+        # Check subject filter before processing
+        subject_lower = subject.lower()
+        if not any(keyword in subject_lower for keyword in subject_keywords):
+            self._debug_log(f"Email with subject '{subject}' does not match filter keywords.")
+            return []
+
+        # Extract expose links using a regex pattern
         pattern = re.compile(r"https:\/\/[a-zA-Z0-9./?=&_-]*expose/(\d+)")
         return list(set(pattern.findall(email_body)))
 

@@ -35,7 +35,7 @@ class BaseExposeProcessor:
     def set_application_text(self, application_text):
         self.application_text = application_text
     
-    def extract_expose_link(email_body):
+    def extract_expose_link(self, subject, email_body):
         raise NotImplementedError
 
     def _generate_expose_link(Expose):

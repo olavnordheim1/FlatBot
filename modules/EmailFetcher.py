@@ -20,16 +20,12 @@ class EmailFetcher:
         self.email_password = base64.b64decode(os.getenv("EMAIL_PASSWORD")).decode("utf-8")
         self.pop3_server = "pop3s.aruba.it"
         self.pop3_port = 995
-
         # Control Features
-        self.delete_emails_after_processing = os.getenv("DELETE_EMAILS_AFTER_PROCESSING", "False").lower() == "true"
-
+        self.delete_emails_after_processing = False
         # Debugging
         self.debug = False
-
         # Load processors dynamically
         self.processors = self.load_processors()
-
         # Filter Keywords
         self.subject_filter = [keyword.strip() for keyword in os.getenv("SUBJECT_FILTER", "").split(",")]
 
@@ -85,12 +81,6 @@ class EmailFetcher:
 
                     subject = email_message["Subject"]
                     sender = email_message["From"]
-
-                    # Check subject filter before processing
-                    subject_lower = subject.lower()
-                    if not any(keyword in subject_lower for keyword in self.subject_filter):
-                        self._debug_log(f"Email with subject '{subject}' does not match filter keywords.")
-                        continue
 
                     body = self.get_email_body(email_message)
                     if body:

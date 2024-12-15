@@ -1,4 +1,6 @@
 import os
+import time
+import random
 import importlib
 from modules.Database import ExposeDB, Expose
 from modules.EmailFetcher import EmailFetcher
@@ -13,12 +15,11 @@ def main():
     email_processor = EmailFetcher(db_instance)
     email_processor.fetch_emails()
     print("Email fetching completed!")
-    print("Starting processor...")
-    process_all_exposes(db_instance)
-    print("All new exposes processed.")
 
-def process_all_exposes(db):
-    exposes = db.get_unprocessed_exposes()
+    random_wait()
+
+    print("Starting processor...")
+    exposes = db_instance.get_unprocessed_exposes()
     if not exposes:
         print("No unprocessed exposes found.")
         return
@@ -27,7 +28,7 @@ def process_all_exposes(db):
             processor_module = importlib.import_module(f"{Expose.source}_processor")
             expose, success = processor_module.process_expose(expose)
             if success:
-                db.update_expose(expose)
+                db_instance.update_expose(expose)
                 
         except ModuleNotFoundError:
             print(f"Processor module for {Expose.source} not found")
@@ -36,6 +37,13 @@ def process_all_exposes(db):
         except Exception as e:
             print(f"Error processing expose from {Expose.source}: {e}")
 
+    print("All new exposes processed.")
+    random_wait(300, 900)
+
+def random_wait(min_seconds=2, max_seconds=5):
+    wait_time = random.uniform(min_seconds, max_seconds)
+    print(f"Waiting for {wait_time:.2f} seconds...")
+    time.sleep(wait_time)
 
 ############################################################
 if __name__ == "__main__":
