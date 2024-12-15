@@ -8,11 +8,25 @@ from datetime import datetime
 
 # Base class for real estate automation
 class BaseExposeProcessor:
-    def __init__(self, email, password, db_file, StealthBrowser):
+    def __init__(self, name, domain, email, password, db_file, StealthBrowser):
+        self.name = name
+        self.domain = domain
         self.email = email
         self.password = password
         self.db_file = db_file
         self.StealthBrowser = StealthBrowser
+    
+    def get_name(self):
+        return self.name
+    
+    def get_domain(self):
+        return self.domain
+    
+    def extract_expose_link(self, subject, email_body):
+        raise NotImplementedError
+
+    def generate_expose_link(expose):
+        raise NotImplementedError
 
     def login(self, driver):
         raise NotImplementedError

@@ -2,10 +2,12 @@ import os
 import poplib
 import base64
 import re
+import importlib
 from email import parser
 from email.message import EmailMessage
 from dotenv import load_dotenv
-from modules.Database import ExposeDB, Expose
+from modules.Database import ExposeDB
+from modules.Expose import Expose
 
 class EmailFetcher:
     def __init__(self, db=None):
@@ -21,19 +23,27 @@ class EmailFetcher:
         # Control Features
         self.delete_emails_after_processing = os.getenv("DELETE_EMAILS_AFTER_PROCESSING", "False").lower() == "true"
 
-        # Source Mapping
-        self.sender_source_mapping = {
-            domain.strip(): source.strip() for domain, source in 
-            (pair.split(":") for pair in os.getenv("SENDER_SOURCE_MAPPING", "").split(",") if ":" in pair)
-        }
+        # Load processors dynamically
+        self.processors = self.load_processors()
 
         # Filter Keywords
         self.subject_filter = [keyword.strip() for keyword in os.getenv("SUBJECT_FILTER", "").split(",")]
 
-    def extract_expose_links_immobilienscout24(self, subject, email_body):
-        """Extract unique expose links from the email body specific to Immobilienscout24."""
-        pattern = re.compile(r"https:\/\/[a-zA-Z0-9./?=&_-]*expose/(\d+)")
-        return list(set(pattern.findall(email_body)))
+    def load_processors(self):
+        processors = {}
+        modules_dir = "modules"
+        for module_name in os.listdir(modules_dir):
+            if module_name.endswith("_processor.py"):
+                module = importlib.import_module(f"{modules_dir}.{module_name[:-3]}")
+                for attr in dir(module):
+                    processor_class = getattr(module, attr)
+                    if isinstance(processor_class, type) and issubclass(processor_class, BaseExposeProcessor) and processor_class is not BaseExposeProcessor:
+                        instance = processor_class(
+                            name=processor_class.name,
+                            domain=processor_class.domain,
+                        )
+                        processors[instance.get_domain()] = instance
+        return processors
 
     def get_email_body(self, email_message: EmailMessage):
         """Extract the body of the email in plain text."""
@@ -71,28 +81,25 @@ class EmailFetcher:
                         continue
 
                     body = self.get_email_body(email_message)
-                    expose_ids = []
                     if body:
-                        source = next((value for domain, value in self.sender_source_mapping.items() if domain in sender), None)
-                        if source:
-                            function_name = f"extract_expose_links_{source}"
-                            if hasattr(self, function_name):
-                                expose_ids = getattr(self, function_name)(subject, body)
-
-                        if expose_ids:
-                            for expose_id in expose_ids:
-                                if not self.db.expose_exists(expose_id):
-                                    new_expose = Expose(
-                                        expose_id=expose_id, 
-                                        source=source
-                                    )
-                                    self.db.insert_expose(new_expose)
-                                    print(f"Inserted expose {expose_id} into the database with source '{source}'.")
-                                else:
-                                    print(f"Expose {expose_id} already exists.")
-                            if self.delete_emails_after_processing:
-                                mailbox.dele(i+1)
-                                print(f"Deleted email with subject: {subject}")
+                        for domain, processor in self.processors.items():
+                            if domain in sender:
+                                expose_ids = processor.extract_expose_link(subject, body)
+                                if expose_ids:
+                                    for expose_id in expose_ids:
+                                        if not self.db.expose_exists(expose_id):
+                                            new_expose = Expose(
+                                                expose_id=expose_id, 
+                                                source=processor.get_name()
+                                            )
+                                            self.db.insert_expose(new_expose)
+                                            print(f"Inserted expose {expose_id} into the database with source '{processor.get_name()}'.")
+                                        else:
+                                            print(f"Expose {expose_id} already exists.")
+                                    if self.delete_emails_after_processing:
+                                        mailbox.dele(i+1)
+                                        print(f"Deleted email with subject: {subject}")
+                                break
                     else:
                         print(f"Email with subject '{subject}' has no readable body.")
 

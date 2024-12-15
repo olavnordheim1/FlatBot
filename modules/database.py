@@ -2,7 +2,7 @@ import sqlite3
 import os
 from datetime import datetime
 from dotenv import load_dotenv
-from Expose import Expose
+from modules.Expose import Expose
 
 class ExposeNotFoundError(Exception):
     pass

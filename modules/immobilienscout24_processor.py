@@ -26,7 +26,13 @@ immo_page_titles = {
     "home_page": "ImmoScout24 – Die Nr. 1 für Immobilien"
 }
 
-def generate_immobilienscout_link(expose):
+def extract_expose_link(self, subject, email_body):
+    """Extract unique expose links from the email body specific to Immobilienscout24."""
+    pattern = re.compile(r"https:\/\/[a-zA-Z0-9./?=&_-]*expose/(\d+)")
+    return list(set(pattern.findall(email_body)))
+
+
+def generate_expose_link(expose):
     expose_id = expose['expose_id']
     offer_link = f"https://push.search.is24.de/email/expose/{expose_id}"
     return offer_link
