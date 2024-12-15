@@ -1,8 +1,12 @@
 import sqlite3
 import os
 from datetime import datetime
+from dotenv import load_dotenv
 
+# Load environment variables
+load_dotenv()
 DB_FILE = os.getenv("DB_FILE", "flats.db")
+MAX_ATTEMPTS_EXPOSE = int(os.getenv("MAX_ATTEMPTS_EXPOSE", 50))
 
 def init_db():
     """Initialize the database if it doesn't already exist."""
@@ -165,15 +169,35 @@ def update_expose(expose_id, **fields):
     conn.close()
 
 def increase_failures_count(expose_id):
-    """Increases the failures count by one for the specified expose_id."""
+    """Increases the failures count by one for the specified expose_id.
+    Marks the expose as processed if the failures count exceeds MAX_ATTEMPTS_EXPOSE.
+    """
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
+
+    # Increment failures count
     cursor.execute("""
         UPDATE exposes SET failures = failures + 1 WHERE expose_id=?
     """, (expose_id,))
-    if cursor.rowcount:
-        print(f"Failures count for expose {expose_id} increased by one.\n")
+
+    # Check updated failures count
+    cursor.execute("""
+        SELECT failures FROM exposes WHERE expose_id=?
+    """, (expose_id,))
+    result = cursor.fetchone()
+
+    if result:
+        failures_count = result[0]
+        print(f"Failures count for expose {expose_id} increased to {failures_count}.")
+        
+        # Mark as processed if failures exceed maximum attempts
+        if failures_count >= MAX_ATTEMPTS_EXPOSE:
+            cursor.execute("""
+                UPDATE exposes SET processed=1 WHERE expose_id=?
+            """, (expose_id,))
+            print(f"Expose {expose_id} marked as processed due to exceeding failures limit.\n")
     else:
         print(f"Expose {expose_id} not found in the database.\n")
+
     conn.commit()
     conn.close()

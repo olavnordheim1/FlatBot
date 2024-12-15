@@ -269,9 +269,6 @@ def process_expose(driver, expose):
             else:
                 print("All attempts failed for expose ID {expose_id}.")
                 database.increase_failures_count(expose_id)
-                if expose['failures'] > 10:
-                    print ("Max Failures exceded. MArking expose as processed.")
-                    database.mark_expose_as_processed(expose_id)
                 return False
 
 
