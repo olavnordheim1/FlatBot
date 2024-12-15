@@ -1,13 +1,14 @@
-from database import init_db
-from email_fetcher import fetch_emails
+from database import ExposeDB, Expose
+from email_fetcher import EmailFetcher
 from process_exposes import process_all_exposes
 
 def main():
     print("Initializing the database...")
-    init_db()
+    db_instance = ExposeDB()
     print("Database initialized successfully!")
     print("Fetching emails...")
-    fetch_emails()
+    email_processor = EmailFetcher(db=db_instance)
+    email_processor.fetch_emails()
     print("Email fetching completed!")
     print("Starting processor...")
     process_all_exposes()
