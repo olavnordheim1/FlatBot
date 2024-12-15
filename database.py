@@ -28,7 +28,8 @@ def init_db():
                 description TEXT,
                 neighborhood TEXT,
                 scraped_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                processed INTEGER DEFAULT 0
+                processed INTEGER DEFAULT 0,
+                failures INTEGER DEFAULT 0
             );
         """)
         conn.commit()
@@ -36,6 +37,7 @@ def init_db():
         print("Database created and initialized.")
     else:
         print("Database already exists.")
+        
 
 def insert_expose(expose_id, **fields):
     """Insert a new expose into the database with optional fields."""
@@ -43,7 +45,7 @@ def insert_expose(expose_id, **fields):
         'source': None, 'title': None, 'price_kalt': None, 'price_warm': None, 'nebekosten': None, 
         'location': None, 'square_meters': None, 'number_of_rooms': None, 
         'agent_name': None, 'real_estate_agency': None, 'energetic_rating': None, 
-        'construction_year': None, 'description': None, 'neighborhood': None, 'processed': 0
+        'construction_year': None, 'description': None, 'neighborhood': None, 'processed': 0, 'failures' : 0
     }
     default_fields.update(fields)
 
@@ -54,15 +56,15 @@ def insert_expose(expose_id, **fields):
             INSERT INTO exposes (
                 expose_id, source, title, price_kalt, price_warm, nebekosten, location, square_meters, 
                 number_of_rooms, agent_name, real_estate_agency, energetic_rating, 
-                construction_year, description, neighborhood, processed
+                construction_year, description, neighborhood, processed, failures
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             expose_id, default_fields['source'], default_fields['title'], default_fields['price_kalt'], 
             default_fields['price_warm'], default_fields['nebekosten'], default_fields['location'], 
             default_fields['square_meters'], default_fields['number_of_rooms'], default_fields['agent_name'], 
             default_fields['real_estate_agency'], default_fields['energetic_rating'], default_fields['construction_year'], 
-            default_fields['description'], default_fields['neighborhood'], default_fields['processed']
+            default_fields['description'], default_fields['neighborhood'], default_fields['processed'], default_fields['failures']
         ))
         conn.commit()
         print(f"Expose {expose_id} inserted successfully.")
@@ -135,7 +137,7 @@ def get_unprocessed_exposes():
     conn = sqlite3.connect(DB_FILE)
     conn.row_factory = sqlite3.Row  # Enable access by column names
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM exposes WHERE processed=0")
+    cursor.execute("SELECT * FROM exposes WHERE processed=0 AND failures < 6")
     rows = cursor.fetchall()
     conn.close()
     return rows
@@ -157,6 +159,20 @@ def update_expose(expose_id, **fields):
 
     if cursor.rowcount:
         print(f"Expose {expose_id} updated successfully.\n")
+    else:
+        print(f"Expose {expose_id} not found in the database.\n")
+    conn.commit()
+    conn.close()
+
+def increase_failures_count(expose_id):
+    """Increases the failures count by one for the specified expose_id."""
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE exposes SET failures = failures + 1 WHERE expose_id=?
+    """, (expose_id,))
+    if cursor.rowcount:
+        print(f"Failures count for expose {expose_id} increased by one.\n")
     else:
         print(f"Expose {expose_id} not found in the database.\n")
     conn.commit()

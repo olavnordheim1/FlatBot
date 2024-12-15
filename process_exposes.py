@@ -1,7 +1,7 @@
 import os
 import time
 import importlib
-import stealth_browser
+import browser_helpers
 from database import get_unprocessed_exposes
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
@@ -11,7 +11,7 @@ def process_all_exposes():
     if not exposes:
         print("No unprocessed exposes found.")
         return
-    stealth_chrome = stealth_browser.get_stealth_browser()
+    stealth_chrome = browser_helpers.get_stealth_browser()
 
     for expose in exposes:
         source_key = expose['source']
