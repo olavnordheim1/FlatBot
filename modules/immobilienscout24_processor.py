@@ -1,8 +1,8 @@
 import os
 import time
 import base64
-import browser_helpers
-import database
+import modules.StealthBrowser as StealthBrowser
+import modules.database as database
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -49,45 +49,45 @@ def perform_login(driver):
             print("User not logged in. Attempting login.")
             login_link.click()
             try:
-                browser_helpers.random_wait(driver)
+                StealthBrowser.random_wait(driver)
                 email_field = WebDriverWait(driver, 10).until(
                     EC.presence_of_element_located((By.ID, "username"))
                 )
                 email_field.send_keys(IMMO_EMAIL)
                 print("Email entered successfully.")
-                browser_helpers.perform_random_action(driver)
+                StealthBrowser.perform_random_action(driver)
 
                 submit_button = WebDriverWait(driver, 10).until(
                     EC.presence_of_element_located((By.ID, "submit"))
                 )
-                browser_helpers.random_mouse_movements(submit_button)
+                StealthBrowser.random_mouse_movements(submit_button)
                 submit_button.click()
                 print("Email submission successful, waiting for password field.")
 
-                browser_helpers.random_wait(driver)
+                StealthBrowser.random_wait(driver)
                 password_field = WebDriverWait(driver, 10).until(
                     EC.presence_of_element_located((By.ID, "password"))
                 )
                 password_field.send_keys(IMMO_PASSWORD)
                 print("Password entered successfully.")
-                browser_helpers.perform_random_action(driver)
+                StealthBrowser.perform_random_action(driver)
 
                 remember_me_checkbox = WebDriverWait(driver, 10).until(
                     EC.presence_of_element_located((By.CSS_SELECTOR, "label[for='rememberMeCheckBox']"))
                 )
-                browser_helpers.random_mouse_movements( driver, remember_me_checkbox)
+                StealthBrowser.random_mouse_movements( driver, remember_me_checkbox)
                 #remember_me_checkbox.click()
                 #print("'Remember Me' checkbox selected.")
-                browser_helpers.perform_random_action(driver)
+                StealthBrowser.perform_random_action(driver)
                 login_button = WebDriverWait(driver, 10).until(
                     EC.presence_of_element_located((By.ID, "loginOrRegistration"))
                 )
-                browser_helpers.random_mouse_movements(driver, login_button)
+                StealthBrowser.random_mouse_movements(driver, login_button)
                 login_button.click()
                 print("Login submitted successfully.")
 
                 ## TO-DO validate success
-                browser_helpers.save_cookies(driver, "immobilienscout24")
+                StealthBrowser.save_cookies(driver, "immobilienscout24")
                 driver.refresh()
                 print("Page reloaded after login.")
                 return True
@@ -105,21 +105,21 @@ def perform_login(driver):
 def scrape_expose(driver, expose_id):
     # Check title
     try:
-        offer_title = browser_helpers.safe_find_element(driver, By.ID, "expose-title")
+        offer_title = StealthBrowser.safe_find_element(driver, By.ID, "expose-title")
 
         if offer_title != "Unknown":
             print("Found Offer title, scriping the rest.")
-            offer_location = browser_helpers.safe_find_element(driver, By.CLASS_NAME, "zip-region-and-country")
-            agent_name = browser_helpers.safe_find_element(driver, By.CLASS_NAME, "truncateChild_5TDve")
-            real_estate_agency = browser_helpers.safe_find_element(driver, By.CSS_SELECTOR, "p[data-qa='company-name']")
-            kalt_price = browser_helpers.safe_find_element(driver, By.CLASS_NAME, "is24-preis-value")
-            flat_size = browser_helpers.safe_find_element(driver, By.CLASS_NAME, "is24qa-wohnflaeche-main")
-            number_of_rooms = browser_helpers.safe_find_element(driver, By.CLASS_NAME, "is24qa-zi-main")
-            nebekosten = browser_helpers.safe_find_element(driver, By.CLASS_NAME, "is24qa-nebenkosten")
-            total_price = browser_helpers.safe_find_element(driver, By.CSS_SELECTOR, "dd.is24qa-gesamtmiete")
-            construction_year = browser_helpers.safe_find_element(driver, By.CLASS_NAME, "is24qa-baujahr")
-            description = browser_helpers.safe_find_element(driver, By.CLASS_NAME, "is24qa-objektbeschreibung")
-            area_description = browser_helpers.safe_find_element(driver, By.CLASS_NAME, "is24qa-lage")
+            offer_location = StealthBrowser.safe_find_element(driver, By.CLASS_NAME, "zip-region-and-country")
+            agent_name = StealthBrowser.safe_find_element(driver, By.CLASS_NAME, "truncateChild_5TDve")
+            real_estate_agency = StealthBrowser.safe_find_element(driver, By.CSS_SELECTOR, "p[data-qa='company-name']")
+            kalt_price = StealthBrowser.safe_find_element(driver, By.CLASS_NAME, "is24-preis-value")
+            flat_size = StealthBrowser.safe_find_element(driver, By.CLASS_NAME, "is24qa-wohnflaeche-main")
+            number_of_rooms = StealthBrowser.safe_find_element(driver, By.CLASS_NAME, "is24qa-zi-main")
+            nebekosten = StealthBrowser.safe_find_element(driver, By.CLASS_NAME, "is24qa-nebenkosten")
+            total_price = StealthBrowser.safe_find_element(driver, By.CSS_SELECTOR, "dd.is24qa-gesamtmiete")
+            construction_year = StealthBrowser.safe_find_element(driver, By.CLASS_NAME, "is24qa-baujahr")
+            description = StealthBrowser.safe_find_element(driver, By.CLASS_NAME, "is24qa-objektbeschreibung")
+            area_description = StealthBrowser.safe_find_element(driver, By.CLASS_NAME, "is24qa-lage")
             
             database.update_expose(
             expose_id,
@@ -137,7 +137,7 @@ def scrape_expose(driver, expose_id):
             neighborhood=area_description,
             )
             print(f"Expose {expose_id} scraped to database.")
-            browser_helpers.perform_random_action(driver)
+            StealthBrowser.perform_random_action(driver)
             return True
         
     except Exception:
@@ -157,7 +157,7 @@ def apply_for_offer(driver, expose_id):
         print("Failed to find or click message button.", e)
         return False
 
-    browser_helpers.perform_random_action(driver)
+    StealthBrowser.perform_random_action(driver)
 
     if "Welcome - ImmobilienScout24" in driver.title:
         print("User not logged in. Bad attempt")
@@ -170,7 +170,7 @@ def apply_for_offer(driver, expose_id):
         return True
 
     try:
-        browser_helpers.random_wait(driver)
+        StealthBrowser.random_wait(driver)
         message_label = WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, "label[for='message']"))
         )
@@ -183,7 +183,7 @@ def apply_for_offer(driver, expose_id):
     message_box.send_keys(APPLICATION_TEXT)
     print("Application text entered successfully.")
 
-    browser_helpers.perform_random_action(driver)
+    StealthBrowser.perform_random_action(driver)
 
     try:
         send_button = WebDriverWait(driver, 10).until(
@@ -229,7 +229,7 @@ def handle_page(driver, expose_id):
         print("Error or landed on home page, skipping.")
         return False
 
-    browser_helpers.perform_random_action(driver)
+    StealthBrowser.perform_random_action(driver)
     # Could be a good offer, let´s check
     #Can we scrape it?
     if not scrape_expose(driver, expose_id):
@@ -256,7 +256,7 @@ def process_expose(driver, expose):
         print(f"Attempt {attempt}...")
         driver.get(offer_link)
         driver.load_cookies(driver, "immobilienscout24")
-        browser_helpers.random_wait(driver)
+        StealthBrowser.random_wait(driver)
         WebDriverWait(driver, 120).until(lambda driver: driver.title != "")
         if handle_page(driver, expose_id):
             print("Attempt {attempt} succeeded!")
@@ -265,7 +265,7 @@ def process_expose(driver, expose):
             print("Attempt {attempt} failed.")
             if attempt < max_attempts:
                 print("Retrying...\n")
-                browser_helpers.random_wait(driver)
+                StealthBrowser.random_wait(driver)
             else:
                 print("All attempts failed for expose ID {expose_id}.")
                 database.increase_failures_count(expose_id)

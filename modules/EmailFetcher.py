@@ -5,7 +5,7 @@ import re
 from email import parser
 from email.message import EmailMessage
 from dotenv import load_dotenv
-from database import ExposeDB, Expose
+from modules.Database import ExposeDB, Expose
 
 class EmailFetcher:
     def __init__(self, db=None):

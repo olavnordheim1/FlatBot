@@ -1,15 +1,16 @@
 # test.py
-from database import print_all_exposes, clear_exposes, delete_expose_by_id
+from modules.database import ExposeDB
 
 
 def main():
     print("Testing Database Utilities...")
+    db_instance = ExposeDB()
 
     # Print all exposes
-    print_all_exposes()
+    db_instance.print_all_exposes()
 
     # Clear all exposes
-    clear_exposes()
+    db_instance.clear_exposes()
 
     # Delete a specific expose
     #delete_expose_by_id("155920388")
