@@ -1,12 +1,13 @@
-import os
-import time
-import base64
+import logging
 from modules.Database import ExposeDB
 from modules.Expose import Expose
 from modules.ApplicationGenerator import ApplicationGenerator
 from dotenv import load_dotenv
 from modules.StealthBrowser import StealthBrowser
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
+
 
 # Base class for real estate automation
 class BaseExposeProcessor:
@@ -18,16 +19,6 @@ class BaseExposeProcessor:
         self.password = password
         self.database = ExposeDB
         self.ApplicationGenerator = ApplicationGenerator()
-        self.debug = True
-        self._debug_log(f"Processor name: {self.name} initialized!")
-
-    def set_debug(self, debug):
-        self.debug = debug
-        self._debug_log(f"Debug mode set to {self.debug}")
-
-    def _debug_log(self, message):
-        if self.debug:
-            print(message)
 
     def get_name(self):
         return self.name
@@ -48,14 +39,14 @@ class BaseExposeProcessor:
     
     #Returns updated Expose object
     def _handle_page(self, Expose, StealthBrowser):
-        self._debug_log(self.name)
+        logger.error(self.name)
         raise NotImplementedError
 
     #Returns updated Expose object
     def process_expose(self, Expose):
         expose_id = Expose.expose_id
         offer_link = self._generate_expose_link(Expose)
-        self._debug_log(f"Processing expose: {offer_link}")
+        logger.info(f"Processing expose: {offer_link}")
         stealth_chrome = StealthBrowser()
         stealth_chrome.get(offer_link)
         stealth_chrome.load_cookies(self.name)
@@ -63,20 +54,20 @@ class BaseExposeProcessor:
 
         max_attempts = 3
         for attempt in range(1, max_attempts + 1):
-            self._debug_log(f"Attempt {attempt}...")           
+            logger.debug(f"Attempt {attempt}...")           
 
             if stealth_chrome.title != "":
                 Expose, success = self._handle_page(Expose, stealth_chrome)
                 if Expose.processed == True:
-                    self._debug_log(f"Attempt {attempt} succeeded!")
+                    logger.info(f"Attempt {attempt} succeeded!")
                     return Expose, True
                 else:
-                    self._debug_log(f"Attempt {attempt} failed.")
+                    logger.debug(f"Attempt {attempt} failed.")
             if attempt < max_attempts:
-                self._debug_log("Retrying...\n")
+                logger.debug("Retrying...\n")
                 stealth_chrome.random_wait()
             else:
-                self._debug_log(f"All attempts failed for expose ID {expose_id}.")
+                logger.info(f"All attempts failed for expose ID {expose_id}.")
                 Expose.failures += 1
                 stealth_chrome.kill()
                 return Expose, False
