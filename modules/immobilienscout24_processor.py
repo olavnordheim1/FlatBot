@@ -162,6 +162,7 @@ class Immobilienscout24_processor(BaseExposeProcessor):
                     self.stealth_chrome.dismiss_overlays()
                     login_button.click()
                     logger.info("Login submitted successfully.")
+                    self.stealth_chrome.random_wait(5,10)
 
                     ## TO-DO validate success
 
@@ -270,6 +271,7 @@ class Immobilienscout24_processor(BaseExposeProcessor):
             # moved in process_expose
             #database.mark_expose_as_processed(expose_id)
             logger.info(f"Expose {Expose.expose_id} applied succesfully.")
+            Expose.processed = True
             # TO-DO Notify user?
             return Expose, True
         else:

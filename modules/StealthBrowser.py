@@ -3,6 +3,7 @@ import time
 import random
 import pickle
 import logging
+from pathlib import Path
 from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -17,6 +18,8 @@ from selenium.common.exceptions import NoSuchElementException, ElementClickInter
 from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
+CHROME_PROFILE_PATH = r'C:\Users\flatmaster\AppData\Local\Google\Chrome\User Data'
+
 
 class StealthBrowser(webdriver.Chrome):
     def __init__(self):
@@ -37,12 +40,13 @@ class StealthBrowser(webdriver.Chrome):
         options.add_argument("--disable-notifications")
         options.add_argument("--ignore-certificate-errors")
         options.add_argument("--disable-web-security")
-        options.add_argument("--disable-dev-shm-usage")
-        options.add_argument("--no-sandbox")
         # Define the path for cookies storage
-        project_root = os.path.dirname(os.path.abspath(__file__))
-        cookies_folder = os.path.join(project_root, "cookies")
-        #options.add_argument(f"--user-data-dir={cookies_folder}")
+        #project_root = os.path.dirname(os.path.abspath(__file__))
+        #cookies_folder = os.path.join(project_root, "cookies")
+        #user_data_dir = ('C:/Users/flatmaster/AppData/Local/Google/Chrome/User Data')
+        #options.add_argument("--user-data-dir={}".format(user_data_dir))
+        #options.add_argument('--user-data-dir=C:/Users/flatmaster/AppData/Local/Google/Chrome/User Data')
+        #options.add_argument('--profile-directory=Default')
         options.add_argument(
             "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
             "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"
@@ -109,7 +113,7 @@ class StealthBrowser(webdriver.Chrome):
                         logging.info(f"Failed to load cookie: {cookie}. Error: {e}")
             logging.info(f"Cookies loaded for {site_name}.")
         else:
-            logging.warning(f"No cookies found for {site_name}.")
+            logging.warning(f"No Cookies found for {site_name}.")
 
 
     def save_page(self, file_prefix="capture"):

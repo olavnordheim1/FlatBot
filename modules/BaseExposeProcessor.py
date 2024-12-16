@@ -51,6 +51,7 @@ class BaseExposeProcessor:
         self.stealth_chrome.get(offer_link)
         self.stealth_chrome.load_cookies(self.name)
         self.stealth_chrome.random_wait()
+        self.stealth_chrome.refresh()
 
         max_attempts = 3
         for attempt in range(1, max_attempts + 1):
@@ -69,5 +70,4 @@ class BaseExposeProcessor:
             else:
                 logger.info(f"All attempts failed for expose ID {expose_id}.")
                 Expose.failures += 1
-                self.stealth_chrome.kill()
                 return Expose, False

@@ -18,18 +18,19 @@ def init_log():    # Create logs directory if it doesn't exist
     current_time = datetime.now()
     log_file = f"Flatbot_{current_time.month}_{current_time.year}.log"
     log_file_path = os.path.join(log_dir, log_file)
-    logging.basicConfig(filename=log_file_path, level=log_level)
+    # Configure root logger
+    logging.basicConfig(
+        level=log_level,
+        format="%(asctime)s - %(levelname)s - %(message)s",
+        handlers=[
+            logging.FileHandler(log_file_path),
+            logging.StreamHandler()
+        ]
+    )
 
 
 def main():
     init_log()
-    # Temporarily add console handler
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(log_level)
-    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-    console_handler.setFormatter(formatter)
-    logger.addHandler(console_handler)
-    
     logger.warning(">----------------------- Flatbot starting! -----------------------<")
     logger.debug('Log started')
     print("Initializing the database...")
@@ -37,36 +38,37 @@ def main():
     logger.info("Database initialized successfully!")
     logger.info("Fetching emails...")
     email_processor = EmailFetcher(db_instance)
-    email_processor.fetch_emails()
-    logger.info("Email fetching completed!")
+    while True:
+        email_processor.fetch_emails()
+        logger.info("Email fetching completed!")
 
-    logger.info("Starting processor...")
-    exposes = db_instance.get_unprocessed_exposes()
-    if not exposes:
-        logger.info("No unprocessed exposes found.")
-        return
-    for expose in exposes:
-        try:
-            processor_module = importlib.import_module(f"modules.{expose.source}_processor")
-            processor_class = getattr(processor_module, f"{expose.source}_processor", None)
-            if not processor_class:
-                logger.error(f"Processor class for {expose.source} not found")
-                continue
+        logger.info("Starting processor...")
+        exposes = db_instance.get_unprocessed_exposes()
+        if not exposes:
+            logger.warning("No unprocessed exposes found.")
+            return
+        for expose in exposes:
+            try:
+                processor_module = importlib.import_module(f"modules.{expose.source}_processor")
+                processor_class = getattr(processor_module, f"{expose.source}_processor", None)
+                if not processor_class:
+                    logger.error(f"Processor class for {expose.source} not found")
+                    continue
 
-            processor_instance = processor_class()
-            expose, success = processor_instance.process_expose(expose)
-            if success:
-                db_instance.update_expose(expose)
-                
-        except ModuleNotFoundError:
-            logger.error(f"Processor module for {expose.source} not found")
-        except AttributeError as e:
-            logger.error(f"Error accessing processor class: {e}")
-        except Exception as e:
-            logger.error(f"Error processing expose from {expose.source}: {e}")
+                processor_instance = processor_class()
+                expose, success = processor_instance.process_expose(expose)
+                if success:
+                    db_instance.update_expose(expose)
+                    logger.warning("Expose processed and updated")
+            except ModuleNotFoundError:
+                logger.error(f"Processor module for {expose.source} not found")
+            except AttributeError as e:
+                logger.error(f"Error accessing processor class: {e}")
+            except Exception as e:
+                logger.error(f"Error processing expose from {expose.source}: {e}")
 
-    logger.info("All new exposes processed.")
-    random_wait(300, 900)
+        logger.warning("All new exposes processed.")
+        random_wait(300, 900)
 
 def random_wait(min_seconds=2, max_seconds=5):
     wait_time = random.uniform(min_seconds, max_seconds)
