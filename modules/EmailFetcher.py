@@ -3,12 +3,15 @@ import poplib
 import base64
 import re
 import importlib
+import logging
 from email import parser
 from email.message import EmailMessage
 from dotenv import load_dotenv
 from modules.Database import ExposeDB
 from modules.Expose import Expose
 from modules.BaseExposeProcessor import BaseExposeProcessor
+
+logger = logging.getLogger(__name__)
 
 class EmailFetcher:
     def __init__(self, db=None):
@@ -22,22 +25,13 @@ class EmailFetcher:
         self.pop3_port = 995
         # Control Features
         self.delete_emails_after_processing = False
-        # Debugging
-        self.debug = False
         # Load processors dynamically
         self.processors = self.load_processors()
         # Filter Keywords
         self.subject_filter = [keyword.strip() for keyword in os.getenv("SUBJECT_FILTER", "").split(",")]
-
-    def set_debug(self, debug):
-        self.debug = debug
-        self._debug_log(f"Debug mode set to {self.debug}")
-
-    def _debug_log(self, message):
-        if self.debug:
-            print(message)
             
     def load_processors(self):
+        logging.debug("Emailfetcher loading processors...")
         processors = {}
         modules_dir = "modules"
         for module_name in os.listdir(modules_dir):
@@ -48,6 +42,7 @@ class EmailFetcher:
                     if isinstance(processor_class, type) and issubclass(processor_class, BaseExposeProcessor) and processor_class is not BaseExposeProcessor:
                         instance = processor_class()
                         processors[instance.get_domain()] = instance
+                logging.debug("Imported " + module_name)
         return processors
 
     def get_email_body(self, email_message: EmailMessage):
@@ -63,23 +58,23 @@ class EmailFetcher:
         return None
 
     def fetch_emails(self):
+        logging.debug("Fetching emails...")
         try:
             mailbox = poplib.POP3_SSL(self.pop3_server, self.pop3_port)
             mailbox.user(self.email_user)
             mailbox.pass_(self.email_password)
 
             num_messages = len(mailbox.list()[1])
-            self._debug_log(f"Found {num_messages} emails.")
+            logging.info(f"Found {num_messages} emails.")
 
             if num_messages > 0:
                 for i in range(num_messages):
                     raw_email = b"\n".join(mailbox.retr(i+1)[1])
                     email_message = parser.Parser().parsestr(raw_email.decode("utf-8"))
-
                     subject = email_message["Subject"]
                     sender = email_message["From"]
-
                     body = self.get_email_body(email_message)
+                    logger.debug("Processing email from " + sender + "Subject: " + subject)
                     if body:
                         for domain, processor in self.processors.items():
                             if domain in sender:
@@ -92,17 +87,17 @@ class EmailFetcher:
                                                 source=processor.get_name()
                                             )
                                             self.db.insert_expose(new_expose)
-                                            self._debug_log(f"Inserted expose {expose_id} into the database with source '{processor.get_name()}'.")
+                                            logging.info(f"Inserted expose {expose_id} into the database with source '{processor.get_name()}'.")
                                         else:
-                                            self._debug_log(f"Expose {expose_id} already exists.")
+                                            logging.debug(f"Expose {expose_id} already exists.")
                                     if self.delete_emails_after_processing:
                                         mailbox.dele(i+1)
-                                        self._debug_log(f"Deleted email with subject: {subject}")
+                                        logging.warning(f"Deleted email with subject: {subject}")
                                 break
                     else:
-                        self._debug_log(f"Email with subject '{subject}' has no readable body.")
+                        logging.warning(f"Email with subject '{subject}' has no readable body.")
 
             mailbox.quit()
 
         except Exception as e:
-            self._debug_log(f"Error: {str(e)}")
+            logging.error(f"Error: {str(e)}")
