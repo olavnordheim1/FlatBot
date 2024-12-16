@@ -1,10 +1,13 @@
-Dear {Landlord_Name},
-My name is {APPLICANT_NAME} {APPLICANT_SURNAME}, and I am very interested in renting the flat at {Flat_Address}.
-I currently work as an {APPLICANT_JOB} at {APPLICANT_COMPANY} in {APPLICANT_CITY} and have a stable monthly net income of {APPLICANT_NET_INCOME_M}.
-I appreciate the flat's location and believe it would be a perfect home for me. I am {APPLICANT_JOB_STATUS} and live a quiet, responsible lifestyle. I take good care of the places I live in and respect my neighbors.
-I am happy to provide all necessary documents, including proof of income and a SCHUFA report, if required. Please let me know if you need anything else for the application process.
-Thank you very much for considering my application. Please contact me at your earliest convenience, I am looking forward to your response and the possibility of visiting the flat.
+Sehr geehrte(r) {Landlord_Name},
 
-Kind regards,
+mein Name ist {APPLICANT_NAME} {APPLICANT_SURNAME}, ich bin {APPLICANT_AGE} Jahre alt, und ich interessiere mich sehr für die Wohnung in {Flat_Address}.
 
+Ich arbeite als {APPLICANT_JOB} bei {APPLICANT_COMPANY} in {APPLICANT_CITY} und habe ein stabiles monatliches Nettoeinkommen von {APPLICANT_NET_INCOME_M}.
+Die Lage der Wohnung gefällt mir sehr und ich glaube, dass sie ein perfektes Zuhause für mich wäre. Ich bin {APPLICANT_JOB_STATUS} und führe einen ruhigen und verantwortungsvollen Lebensstil. Ich kümmere mich gut um die Wohnung und respektiere meine Nachbarn.
+
+Gerne stelle ich Ihnen alle erforderlichen Unterlagen, einschließlich Einkommensnachweisen und einer SCHUFA-Auskunft, zur Verfügung. Bitte lassen Sie mich wissen, ob Sie weitere Informationen für den Bewerbungsprozess benötigen.
+
+Vielen Dank für Ihre Zeit und Ihre Berücksichtigung meiner Bewerbung. Ich freue mich auf Ihre Rückmeldung und die Möglichkeit, die Wohnung zu besichtigen.
+
+Mit freundlichen Grüßen,
 {APPLICANT_NAME} {APPLICANT_SURNAME}

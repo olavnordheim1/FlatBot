@@ -34,8 +34,8 @@ class ApplicationGenerator:
     def generate_application(self, Expose):
         if Expose:
             text = self._fill_application_template(Expose)
-            print("Generated Application Text \n")
-            print(text)
+            #TO-DO debug print("Generated Application Text \n")
+            #TO-DO debug print(text)
             return text
         return self.default_text
     
@@ -52,7 +52,7 @@ class ApplicationGenerator:
             "APPLICANT_CITY": self.applicant_data['city'],
             "APPLICANT_NET_INCOME_M": self.applicant_data['net_income'],
             "APPLICANT_JOB_STATUS": self.applicant_data['job_status'],
-            "APPLICANT_AGE": self.applicant_data['age'],
+            "APPLICANT_AGE": self._calculate_age(self.applicant_data['birthdate']),
         }
         try:
             if not os.path.exists(self.template_path):
@@ -62,14 +62,16 @@ class ApplicationGenerator:
                 template_content = file.read()
 
             filled_content = template_content.format(**application_data)
+            #TO-DO debug 
             return filled_content
         except:
+            #TO-DO debug 
             return self.fallback_text
 
 
-    def _calculate_age(self):
+    def _calculate_age(self, birthdate):
         #Calculates age from a birthdate string in the format DD.MM.YYYY.
-        birthdate = datetime.strptime(self.applicant_data['birthdate'], "%d.%m.%Y")
+        birthdate = datetime.strptime(birthdate, "%d.%m.%Y")
         today = datetime.today()
         age = today.year - birthdate.year - ((today.month, today.day) < (birthdate.month, birthdate.day))
         return age
