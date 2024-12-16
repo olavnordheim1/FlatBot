@@ -1,8 +1,11 @@
 import sqlite3
 import os
+import logging
 from datetime import datetime
 from dotenv import load_dotenv
 from modules.Expose import Expose
+
+logger = logging.getLogger(__name__)
 
 class ExposeNotFoundError(Exception):
     pass
@@ -15,16 +18,7 @@ class ExposeDB:
         load_dotenv()
         self.db_file = os.getenv("DB_FILE", db_file)
         self.max_attempts_expose = int(os.getenv("MAX_ATTEMPTS_EXPOSE", max_attempts))
-        self.debug = debug
         self.init_db()
-
-    def set_debug(self, debug):
-        self.debug = debug
-        self._debug_log(f"Debug mode set to {self.debug}")
-
-    def _debug_log(self, message):
-        if self.debug:
-            print(message)
 
     def _get_connection(self):
         return sqlite3.connect(self.db_file)
@@ -41,7 +35,7 @@ class ExposeDB:
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(create_table_query)
-            self._debug_log("Database created and initialized.")
+            logging.debug("Database created and initialized.")
 
     def _get_sql_type(self, value):
         if isinstance(value, int):
@@ -69,7 +63,7 @@ class ExposeDB:
                 INSERT INTO exposes ({fields})
                 VALUES ({placeholders})
             """, values)
-            self._debug_log(f"Expose {expose.expose_id} inserted successfully.")
+            logging.debug(f"Expose {expose.expose_id} inserted successfully.")
             return True
 
     def update_expose(self, expose):
@@ -81,7 +75,7 @@ class ExposeDB:
                 UPDATE exposes SET {fields} WHERE expose_id=?
             """, values)
             if cursor.rowcount:
-                self._debug_log(f"Expose {expose.expose_id} updated successfully.")
+                logging.debug(f"Expose {expose.expose_id} updated successfully.")
                 return True
             else:
                 raise ExposeUpdateError(f"Failed to update expose {expose.expose_id}, not found.")
@@ -110,7 +104,7 @@ class ExposeDB:
             cursor.execute("DELETE FROM exposes WHERE expose_id=?", (expose_id,))
             conn.commit()
             if cursor.rowcount == 0:
-                self._debug_log(f"Expose {expose_id} not found in the database.")
+                logging.warning(f"Expose {expose_id} not found in the database.")
                 return False
             return True
 
@@ -121,7 +115,7 @@ class ExposeDB:
                 UPDATE exposes SET processed=1 WHERE expose_id=?
             """, (expose_id,))
             if cursor.rowcount:
-                self._debug_log(f"Expose {expose_id} marked as processed.\n")
+                logging.debug(f"Expose {expose_id} marked as processed.\n")
                 conn.commit()
                 return True
             else:
@@ -139,7 +133,7 @@ class ExposeDB:
             result = cursor.fetchone()
             if result:
                 failures_count = result[0]
-                self._debug_log(f"Failures count for expose {expose_id} increased to {failures_count}.")
+                logging.debug(f"Failures count for expose {expose_id} increased to {failures_count}.")
                 return failures_count
             raise ExposeNotFoundError(f"Expose {expose_id} not found.")
 
@@ -150,7 +144,7 @@ class ExposeDB:
             cursor.execute("SELECT * FROM exposes WHERE processed=0 AND failures < ?", (self.max_attempts_expose,))
             rows = cursor.fetchall()
             exposes = [Expose(*row[1:]) for row in rows]
-            self._debug_log(f"Fetched {len(exposes)} unprocessed exposes.")
+            logging.debug(f"Fetched {len(exposes)} unprocessed exposes.")
             return exposes
         
     def print_all_exposes(self):
@@ -167,4 +161,4 @@ class ExposeDB:
             cursor = conn.cursor()
             cursor.execute("DELETE FROM exposes")
             conn.commit()
-            self._debug_log("All exposes have been cleared.")
+            logging.warning("All exposes have been cleared.")
