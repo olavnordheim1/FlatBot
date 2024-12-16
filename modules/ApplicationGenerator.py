@@ -33,6 +33,10 @@ class ApplicationGenerator:
             "age" : self._calculate_age(os.getenv("APPLICANT_BIRTHDATE")),
         }
 
+    def get_applicant_attribute(self, attribute):
+        return self.applicant_data.get(attribute, "Unknown")
+    
+    
     def generate_application(self, Expose):
         logger.debug("Generating Application text")
         if Expose:

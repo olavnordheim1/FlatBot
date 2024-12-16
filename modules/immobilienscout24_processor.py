@@ -283,3 +283,5 @@ class Immobilienscout24_processor(BaseExposeProcessor):
             logging.info("Successfully clicked the 'Accept All' button.")
         except Exception as e:
             logging.error(f"Failed to click the 'Accept All' button: {e}")
+
+    def _fill_application_form(self, Expose):

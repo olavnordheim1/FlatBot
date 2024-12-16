@@ -13,13 +13,13 @@ logger = logging.getLogger(__name__)
 class BaseExposeProcessor:
     name = "BaseProcessor"
     domain = "BaseDomain"
+    ApplicationGenerator = ApplicationGenerator()
 
     def __init__(self, email, password):
         self.email = email
         self.password = password
-        self.database = ExposeDB
-        self.ApplicationGenerator = ApplicationGenerator()
         self.stealth_chrome = StealthBrowser()
+        
 
     def get_name(self):
         return self.name
