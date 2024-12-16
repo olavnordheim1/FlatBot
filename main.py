@@ -16,8 +16,6 @@ def main():
     email_processor.fetch_emails()
     print("Email fetching completed!")
 
-    random_wait()
-
     print("Starting processor...")
     exposes = db_instance.get_unprocessed_exposes()
     if not exposes:
@@ -25,17 +23,23 @@ def main():
         return
     for expose in exposes:
         try:
-            processor_module = importlib.import_module(f"{Expose.source}_processor")
-            expose, success = processor_module.process_expose(expose)
+            processor_module = importlib.import_module(f"modules.{expose.source}_processor")
+            processor_class = getattr(processor_module, f"{expose.source}_processor", None)
+            if not processor_class:
+                print(f"Processor class for {expose.source} not found")
+                continue
+
+            processor_instance = processor_class()
+            expose, success = processor_instance.process_expose(expose)
             if success:
                 db_instance.update_expose(expose)
                 
         except ModuleNotFoundError:
-            print(f"Processor module for {Expose.source} not found")
-        except AttributeError:
-            print(f"process_expose function missing in module {Expose.source}_processor")
+            print(f"Processor module for {expose.source} not found")
+        except AttributeError as e:
+            print(f"Error accessing processor class: {e}")
         except Exception as e:
-            print(f"Error processing expose from {Expose.source}: {e}")
+            print(f"Error processing expose from {expose.source}: {e}")
 
     print("All new exposes processed.")
     random_wait(300, 900)

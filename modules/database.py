@@ -31,7 +31,7 @@ class ExposeDB:
 
     def init_db(self):
         fields = ', '.join(
-            f"{key} {self._get_sql_type(value)}" for key, value in Expose().__dict__.items()
+            f"{key} {self._get_sql_type(value)}" for key, value in Expose(expose_id=None).__dict__.items()
         )
         create_table_query = f"""
             CREATE TABLE IF NOT EXISTS exposes (
@@ -149,4 +149,22 @@ class ExposeDB:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM exposes WHERE processed=0 AND failures < ?", (self.max_attempts_expose,))
             rows = cursor.fetchall()
-            return rows
+            exposes = [Expose(*row[1:]) for row in rows]
+            self._debug_log(f"Fetched {len(exposes)} unprocessed exposes.")
+            return exposes
+        
+    def print_all_exposes(self):
+        with self._get_connection() as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM exposes")
+            rows = cursor.fetchall()
+            for row in rows:
+                print(Expose(*row[1:]))
+
+    def clear_all_exposes(self):
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM exposes")
+            conn.commit()
+            self._debug_log("All exposes have been cleared.")

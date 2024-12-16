@@ -9,14 +9,16 @@ from datetime import datetime
 
 # Base class for real estate automation
 class BaseExposeProcessor:
+    name = "BaseProcessor"
+    domain = "BaseDomain"
+
     def __init__(self, email, password, application_text):
-        self.name = "BaseProcessor"
-        self.domain = "BaseDomain"
         self.email = email
         self.password = password
         self.application_text = application_text
         self.database = ExposeDB
-        self.debug = False
+        self.debug = True
+        self._debug_log(f"Processor name: {self.name} initialized!")
 
     def set_debug(self, debug):
         self.debug = debug
@@ -35,13 +37,14 @@ class BaseExposeProcessor:
     def set_application_text(self, application_text):
         self.application_text = application_text
     
-    def extract_expose_link(self, subject, email_body):
+    @staticmethod
+    def extract_expose_link(subject, email_body):
         raise NotImplementedError
-
+    
+    @staticmethod
     def _generate_expose_link(Expose):
         raise NotImplementedError
     
-
     #Returns updated Expose object
     def _handle_page(self, Expose, StealthBrowser):
         self._debug_log(self.name)
@@ -50,7 +53,7 @@ class BaseExposeProcessor:
     #Returns updated Expose object
     def process_expose(self, Expose):
         expose_id = Expose.expose_id
-        offer_link = self.generate_offer_link(Expose)
+        offer_link = self._generate_expose_link(Expose)
         self._debug_log(f"Processing expose: {offer_link}")
         stealth_chrome = StealthBrowser()
         stealth_chrome.get(offer_link)

@@ -46,10 +46,7 @@ class EmailFetcher:
                 for attr in dir(module):
                     processor_class = getattr(module, attr)
                     if isinstance(processor_class, type) and issubclass(processor_class, BaseExposeProcessor) and processor_class is not BaseExposeProcessor:
-                        instance = processor_class(
-                            name=processor_class.name,
-                            domain=processor_class.domain,
-                        )
+                        instance = processor_class()
                         processors[instance.get_domain()] = instance
         return processors
 
