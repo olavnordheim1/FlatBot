@@ -1,13 +1,17 @@
+import os
 from modules.Expose import Expose
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
-APPLICATION_TEXT = os.getenv("DEFAULT_APPLICATION_TEXT")
+
 
 class ApplicationGenerator:
     def __init__(self):
-        pass
+        self.default_text = os.getenv("DEFAULT_APPLICATION_TEXT")
 
-    def generate_application(Expose):
-        pass
+    def generate_application(self, Expose):
+        if Expose:
+            pass
+        return self.default_text
+        
