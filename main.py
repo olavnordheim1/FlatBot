@@ -20,19 +20,27 @@ def init_log():    # Create logs directory if it doesn't exist
     log_file_path = os.path.join(log_dir, log_file)
     logging.basicConfig(filename=log_file_path, level=log_level)
 
+    # Temporarily add console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(log_level)
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+
 
 def main():
     init_log()
+    logger.warning(">----------------------- Flatbot starting! -----------------------<")
     logger.debug('Log started')
     print("Initializing the database...")
     db_instance = ExposeDB()
     logger.info("Database initialized successfully!")
-    logger.debug("Fetching emails...")
+    logger.info("Fetching emails...")
     email_processor = EmailFetcher(db_instance)
     email_processor.fetch_emails()
     logger.info("Email fetching completed!")
 
-    logger.debug("Starting processor...")
+    logger.info("Starting processor...")
     exposes = db_instance.get_unprocessed_exposes()
     if not exposes:
         logger.info("No unprocessed exposes found.")
@@ -62,7 +70,7 @@ def main():
 
 def random_wait(min_seconds=2, max_seconds=5):
     wait_time = random.uniform(min_seconds, max_seconds)
-    logger.debug(f"Waiting for {wait_time:.2f} seconds...")
+    logger.info(f"Waiting for {wait_time:.2f} seconds...")
     time.sleep(wait_time)
 
 ############################################################

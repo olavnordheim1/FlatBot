@@ -63,16 +63,16 @@ class Immobilienscout24_processor(BaseExposeProcessor):
     #Returns updated Expose object, called in process_expose
     def _handle_page(self, Expose):
         page_title = self.stealth_chrome.title
-        logger.debug(f"Page title: {page_title}")
+        logger.info(f"Page title: {page_title}")
         
 
         if self.immo_page_titles['cookie_wall'] in page_title:
             logger.warning("Cookie wall detected, waiting for user input.")
             self.stealth_chrome.wait_for_user()
         elif self.immo_page_titles['offer_expired'] in page_title or self.immo_page_titles['offer_deactivated'] in page_title:
-            logger.debug("Offer expired or deactivated, skipping.")
+            logger.info("Offer expired or deactivated, skipping.")
             Expose.processed = True
-            logger.debug(f"Expose {Expose.expose_id} marked as processed.")
+            logger.info(f"Expose {Expose.expose_id} marked as processed.")
             return Expose, False
         elif self.immo_page_titles['login_page'] in page_title:
             logger.warning("Login page detected, attempting login.")
@@ -107,17 +107,17 @@ class Immobilienscout24_processor(BaseExposeProcessor):
         try:
             login_header = self.stealth_chrome.find_element(By.CLASS_NAME, "topnavigation__sso-login__header")
             if login_header and "angemeldet als" in login_header.text:
-                logger.debug("User already logged in.")
+                logger.info("User already logged in.")
                 return True
         except Exception:
-            logger.debug("User does not seems to be logged in")
+            logger.info("User does not seems to be logged in")
             return False
         
     def _perform_login(self):
         try:
             login_link = self.stealth_chrome.find_element(By.CLASS_NAME, "topnavigation__sso-login__middle")
             if login_link and "Anmelden" in login_link.text:
-                logger.debug("User not logged in. Attempting login.")
+                logger.info("User not logged in. Attempting login.")
                 login_link.click()
                 try:
                     self.stealth_chrome.random_wait()
@@ -125,7 +125,7 @@ class Immobilienscout24_processor(BaseExposeProcessor):
                         EC.presence_of_element_located((By.ID, "username"))
                     )
                     email_field.send_keys(self.email)
-                    logger.debug("Email entered successfully.")
+                    logger.info("Email entered successfully.")
                     self.stealth_chrome.perform_random_action()
 
                     submit_button = WebDriverWait(self.stealth_chrome, 10).until(
@@ -133,14 +133,14 @@ class Immobilienscout24_processor(BaseExposeProcessor):
                     )
                     self.stealth_chrome.random_mouse_movements(submit_button)
                     submit_button.click()
-                    logger.debugg("Email submission successful, waiting for password field.")
+                    logger.info("Email submission successful, waiting for password field.")
 
                     self.stealth_chrome.random_wait()
                     password_field = WebDriverWait(self.stealth_chrome, 10).until(
                         EC.presence_of_element_located((By.ID, "password"))
                     )
                     password_field.send_keys(self.password)
-                    logger.debug("Password entered successfully.")
+                    logger.info("Password entered successfully.")
                     self.stealth_chrome.perform_random_action()
 
                     remember_me_checkbox = WebDriverWait(self.stealth_chrome, 10).until(
@@ -148,7 +148,7 @@ class Immobilienscout24_processor(BaseExposeProcessor):
                     )
                     self.stealth_chrome.random_mouse_movements(remember_me_checkbox)
                     #remember_me_checkbox.click()
-                    #logger.debug("'Remember Me' checkbox selected.")
+                    #logger.info("'Remember Me' checkbox selected.")
                     self.stealth_chrome.perform_random_action()
                     login_button = WebDriverWait(self.stealth_chrome, 10).until(
                         EC.presence_of_element_located((By.ID, "loginOrRegistration"))
@@ -161,7 +161,7 @@ class Immobilienscout24_processor(BaseExposeProcessor):
 
                     self.stealth_chrome.save_cookies(self.name)
                     self.stealth_chrome.refresh()
-                    logger.debug("Page reloaded after login.")
+                    logger.info("Page reloaded after login.")
                     return True
                 except Exception as e:
                     logger.warning("Login failed.", e)
@@ -169,7 +169,7 @@ class Immobilienscout24_processor(BaseExposeProcessor):
                     # TO-DO Notify user
                     return False                           
         except Exception:
-            logger.debug("Login button not found.", e)
+            logger.info("Login button not found.", e)
             #self.stealth_chrome_helpers.wait_for_user()
             # TO-DO Notify user
             return False
@@ -181,7 +181,7 @@ class Immobilienscout24_processor(BaseExposeProcessor):
             offer_title = self.stealth_chrome.safe_find_element(By.ID, "expose-title")
 
             if offer_title != "Unknown":
-                logger.debug("Found Offer title, scriping the rest.")
+                logger.info("Found Offer title, scriping the rest.")
                 Expose.location = self.stealth_chrome.safe_find_element(By.CLASS_NAME, "zip-region-and-country")
                 Expose.agent_name = self.stealth_chrome.safe_find_element(By.CLASS_NAME, "truncateChild_5TDve")
                 Expose.real_estate_agency = self.stealth_chrome.safe_find_element(By.CSS_SELECTOR, "p[data-qa='company-name']")
@@ -204,28 +204,28 @@ class Immobilienscout24_processor(BaseExposeProcessor):
         
 
     def _apply_for_offer(self, Expose):
-        logger.debug("Trying application...")
+        logger.info("Trying application...")
         try:
             message_button = WebDriverWait(self.stealth_chrome, 10).until(
                 EC.presence_of_element_located((By.CLASS_NAME, "Button_button-primary__6QTnx"))
             )
             message_button.click()
-            logger.debug("Message button found and clicked successfully.")
+            logger.info("Message button found and clicked successfully.")
         except Exception as e:
-            logger.debug("Failed to find or click message button.", e)
+            logger.info("Failed to find or click message button.", e)
             return Expose, False
 
         self.stealth_chrome.perform_random_action()
 
         if "Welcome - ImmobilienScout24" in self.stealth_chrome.title:
-            logger.debug("User not logged in. Bad attempt")
+            logger.info("User not logged in. Bad attempt")
             return Expose, False
 
         if "MieterPlus freischalten | ImmoScout24" in self.stealth_chrome.title:
             logger.info("MieterPlus page detected. Skipping expose.")
             # moved in process_expose
             #database.mark_expose_as_processed(expose_id)
-            logger.debug(f"Expose {Expose.expose_id} marked as processed.")
+            logger.info(f"Expose {Expose.expose_id} marked as processed.")
             Expose.processed = True
             return Expose, True
 
@@ -241,7 +241,7 @@ class Immobilienscout24_processor(BaseExposeProcessor):
             return Expose, False
 
         self._fill_application_form(Expose)
-        logger.debug("Application text entered successfully.")
+        logger.info("Application text entered successfully.")
 
         self.stealth_chrome.perform_random_action()
 
@@ -251,9 +251,9 @@ class Immobilienscout24_processor(BaseExposeProcessor):
             )
             self.stealth_chrome.execute_script("arguments[0].scrollIntoView(true);", send_button)
             send_button.click()
-            logger.debug("Submit clicked, waiting for confirmation.")
+            logger.info("Submit clicked, waiting for confirmation.")
         except:
-            logger.debug("Submit not fount!")
+            logger.info("Submit not fount!")
             return Expose, False
 
         confirmation_message = WebDriverWait(self.stealth_chrome, 10).until(
@@ -342,6 +342,6 @@ class Immobilienscout24_processor(BaseExposeProcessor):
                         field.click()
                     self.stealth_chrome.random_wait()
             except Exception as e:
-                logging.debug(f"Could not fill field '{field_name}': {e}")
+                logging.info(f"Could not fill field '{field_name}': {e}")
 
         logging.info("Form filling completed.")

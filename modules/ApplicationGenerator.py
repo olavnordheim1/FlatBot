@@ -38,14 +38,14 @@ class ApplicationGenerator:
     
     
     def generate_application(self, Expose):
-        logger.debug("Generating Application text")
+        logger.info("Generating Application text")
         if Expose:
             text = self._fill_application_template(Expose)
             #TO-DO debug print("Generated Application Text \n")
             #TO-DO debug print(text)
         else:
             text = self.default_text
-        logger.debug(text)
+        logger.info(text)
         return text
     
     def _fill_application_template(self, Expose):
@@ -82,5 +82,5 @@ class ApplicationGenerator:
         birthdate = datetime.strptime(birthdate, "%d.%m.%Y")
         today = datetime.today()
         age = today.year - birthdate.year - ((today.month, today.day) < (birthdate.month, birthdate.day))
-        logger.debug(f"Age is {age}")
+        logger.info(f"Age is {age}")
         return age

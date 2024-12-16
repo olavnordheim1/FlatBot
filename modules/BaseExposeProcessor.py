@@ -54,17 +54,17 @@ class BaseExposeProcessor:
 
         max_attempts = 3
         for attempt in range(1, max_attempts + 1):
-            logger.debug(f"Attempt {attempt}...")           
+            logger.info(f"Attempt {attempt}...")           
 
             if self.stealth_chrome.title != "":
-                Expose, success = self._handle_page(Expose, self.stealth_chrome)
+                Expose, success = self._handle_page(Expose)
                 if Expose.processed == True:
                     logger.info(f"Attempt {attempt} succeeded!")
                     return Expose, True
                 else:
-                    logger.debug(f"Attempt {attempt} failed.")
+                    logger.info(f"Attempt {attempt} failed.")
             if attempt < max_attempts:
-                logger.debug("Retrying...\n")
+                logger.info("Retrying...\n")
                 self.stealth_chrome.random_wait()
             else:
                 logger.info(f"All attempts failed for expose ID {expose_id}.")

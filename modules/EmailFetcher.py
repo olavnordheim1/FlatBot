@@ -31,7 +31,7 @@ class EmailFetcher:
         self.subject_filter = [keyword.strip() for keyword in os.getenv("SUBJECT_FILTER", "").split(",")]
             
     def load_processors(self):
-        logging.debug("Emailfetcher loading processors...")
+        logging.info("Emailfetcher loading processors...")
         processors = {}
         modules_dir = "modules"
         for module_name in os.listdir(modules_dir):
@@ -42,7 +42,7 @@ class EmailFetcher:
                     if isinstance(processor_class, type) and issubclass(processor_class, BaseExposeProcessor) and processor_class is not BaseExposeProcessor:
                         instance = processor_class()
                         processors[instance.get_domain()] = instance
-                logging.debug("Imported " + module_name)
+                logging.info("Imported " + module_name)
         return processors
 
     def get_email_body(self, email_message: EmailMessage):
@@ -58,7 +58,7 @@ class EmailFetcher:
         return None
 
     def fetch_emails(self):
-        logging.debug("Fetching emails...")
+        logging.info("Fetching emails...")
         try:
             mailbox = poplib.POP3_SSL(self.pop3_server, self.pop3_port)
             mailbox.user(self.email_user)
@@ -74,7 +74,7 @@ class EmailFetcher:
                     subject = email_message["Subject"]
                     sender = email_message["From"]
                     body = self.get_email_body(email_message)
-                    logger.debug("Processing email from " + sender + "Subject: " + subject)
+                    logger.info("Processing email from " + sender + "Subject: " + subject)
                     if body:
                         for domain, processor in self.processors.items():
                             if domain in sender:
@@ -89,7 +89,7 @@ class EmailFetcher:
                                             self.db.insert_expose(new_expose)
                                             logging.info(f"Inserted expose {expose_id} into the database with source '{processor.get_name()}'.")
                                         else:
-                                            logging.debug(f"Expose {expose_id} already exists.")
+                                            logging.info(f"Expose {expose_id} already exists.")
                                     if self.delete_emails_after_processing:
                                         mailbox.dele(i+1)
                                         logging.warning(f"Deleted email with subject: {subject}")

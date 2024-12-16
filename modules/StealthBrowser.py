@@ -50,7 +50,7 @@ class StealthBrowser(webdriver.Chrome):
 
     def random_wait(self, min_seconds=2, max_seconds=5):
         wait_time = random.uniform(min_seconds, max_seconds)
-        logging.debug(f"Waiting for {wait_time:.2f} seconds...")
+        logging.info(f"Waiting for {wait_time:.2f} seconds...")
         time.sleep(wait_time)
 
     def safe_find_element(self, by, value):
@@ -65,13 +65,13 @@ class StealthBrowser(webdriver.Chrome):
             offset_x = random.randint(-100, 100)
             offset_y = random.randint(-100, 100)
             action.move_to_element_with_offset(element, offset_x, offset_y).perform()
-            logging.debug(f"Moved mouse to offset ({offset_x}, {offset_y})")
+            logging.info(f"Moved mouse to offset ({offset_x}, {offset_y})")
             self.random_wait(0.5, 1.5)
 
     def random_scroll(self):
         scroll_amount = random.randint(-300, 300)
         self.execute_script(f"window.scrollBy(0, {scroll_amount})")
-        logging.debug(f"Scrolled by {scroll_amount} pixels")
+        logging.info(f"Scrolled by {scroll_amount} pixels")
         self.random_wait(0.5, 1.5)
 
     def perform_random_action(self):
@@ -97,7 +97,7 @@ class StealthBrowser(webdriver.Chrome):
                     try:
                         self.add_cookie(cookie)
                     except Exception as e:
-                        logging.debug(f"Failed to load cookie: {cookie}. Error: {e}")
+                        logging.info(f"Failed to load cookie: {cookie}. Error: {e}")
             logging.info(f"Cookies loaded for {site_name}.")
         else:
             logging.warning(f"No cookies found for {site_name}.")
