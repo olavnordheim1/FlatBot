@@ -24,7 +24,7 @@ class Immobilienscout24_processor(BaseExposeProcessor):
         load_dotenv()
         IMMO_EMAIL = base64.b64decode(os.getenv("IMMO_EMAIL")).decode("utf-8")
         IMMO_PASSWORD = base64.b64decode(os.getenv("IMMO_PASSWORD")).decode("utf-8")
-        APPLICATION_TEXT = os.getenv("APPLICATION_TEXT")
+        APPLICATION_TEXT = os.getenv("DEFAULT_APPLICATION_TEXT")
 
         super().__init__(IMMO_EMAIL, IMMO_PASSWORD, APPLICATION_TEXT)
 
