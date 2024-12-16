@@ -1,10 +1,9 @@
 import os
 import time
 import random
-import base64
 import pickle
 import logging
-from modules.Database import ExposeDB, Expose
+from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
@@ -23,6 +22,9 @@ class StealthBrowser(webdriver.Chrome):
         load_dotenv()
         self.cookies_dir = os.getenv("COOKIES_DIR", "cookies")
         os.makedirs(self.cookies_dir, exist_ok=True)
+
+        self.logs_dir = os.path.join("logs", "StealthBrowserCaptures")
+        os.makedirs(self.logs_dir, exist_ok=True)
 
         options = Options()
         options.add_argument("--disable-blink-features=AutomationControlled")
@@ -99,3 +101,20 @@ class StealthBrowser(webdriver.Chrome):
             logging.info(f"Cookies loaded for {site_name}.")
         else:
             logging.warning(f"No cookies found for {site_name}.")
+
+
+    def save_page(self, file_prefix="capture"):
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        capture_dir = os.path.join(self.logs_dir, timestamp)
+        os.makedirs(capture_dir, exist_ok=True)
+
+        # Save page source
+        page_source_file = os.path.join(capture_dir, f"{file_prefix}_source.html")
+        with open(page_source_file, "w", encoding="utf-8") as f:
+            f.write(self.page_source)
+        logging.warning(f"Page source saved: {page_source_file}")
+
+        # Save screenshot
+        screenshot_file = os.path.join(capture_dir, f"{file_prefix}_screenshot.jpg")
+        self.save_screenshot(screenshot_file)
+        logging.warning(f"Screenshot saved: {screenshot_file}")
