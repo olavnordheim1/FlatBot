@@ -1,14 +1,16 @@
 import os
+import logging
 from datetime import datetime
 from modules.Expose import Expose
 from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
+logger = logging.getLogger(__name__)
 
 
 class ApplicationGenerator:
     def __init__(self):
+        # Load environment variables
+        load_dotenv()
         self.template_path = os.getenv("TEMPLATE_FILENAME")
         self.fallback_text = os.getenv("FALLBACK_TEXT")
         self.applicant_data = {
@@ -32,12 +34,15 @@ class ApplicationGenerator:
         }
 
     def generate_application(self, Expose):
+        logger.debug("Generating Application text")
         if Expose:
             text = self._fill_application_template(Expose)
             #TO-DO debug print("Generated Application Text \n")
             #TO-DO debug print(text)
-            return text
-        return self.default_text
+        else:
+            text = self.default_text
+        logger.debug(text)
+        return text
     
     def _fill_application_template(self, Expose):
         #Loads the template file, fills in the placeholders, and returns the filled string.
@@ -56,22 +61,22 @@ class ApplicationGenerator:
         }
         try:
             if not os.path.exists(self.template_path):
-                raise FileNotFoundError(f"Template file '{self.template_path}' not found.")
+                logger.error(f"Template file '{self.template_path}' not found.")
 
             with open(self.template_path, 'r', encoding='utf-8') as file:
                 template_content = file.read()
 
             filled_content = template_content.format(**application_data)
-            #TO-DO debug 
             return filled_content
         except:
-            #TO-DO debug 
             return self.fallback_text
 
 
     def _calculate_age(self, birthdate):
+        logger.debug(f"calculating age from {birthdate}")
         #Calculates age from a birthdate string in the format DD.MM.YYYY.
         birthdate = datetime.strptime(birthdate, "%d.%m.%Y")
         today = datetime.today()
         age = today.year - birthdate.year - ((today.month, today.day) < (birthdate.month, birthdate.day))
+        logger.debug(f"Age is {age}")
         return age
