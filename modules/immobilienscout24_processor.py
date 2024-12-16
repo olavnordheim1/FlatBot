@@ -24,9 +24,8 @@ class Immobilienscout24_processor(BaseExposeProcessor):
         load_dotenv()
         IMMO_EMAIL = base64.b64decode(os.getenv("IMMO_EMAIL")).decode("utf-8")
         IMMO_PASSWORD = base64.b64decode(os.getenv("IMMO_PASSWORD")).decode("utf-8")
-        APPLICATION_TEXT = os.getenv("DEFAULT_APPLICATION_TEXT")
 
-        super().__init__(IMMO_EMAIL, IMMO_PASSWORD, APPLICATION_TEXT)
+        super().__init__(IMMO_EMAIL, IMMO_PASSWORD)
 
         self.immo_page_titles = {
             "cookie_wall": "Ich bin kein Roboter",
@@ -241,7 +240,7 @@ class Immobilienscout24_processor(BaseExposeProcessor):
             self._debug_log("Message pop-up did not open or message box not found, bad attempt")
             return Expose, False
 
-        message_box.send_keys(self.application_text)
+        message_box.send_keys(self.ApplicationGenerator.generate_application(Expose))
         self._debug_log("Application text entered successfully.")
 
         StealthBrowser.perform_random_action()

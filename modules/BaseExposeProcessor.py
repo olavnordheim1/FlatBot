@@ -3,6 +3,7 @@ import time
 import base64
 from modules.Database import ExposeDB
 from modules.Expose import Expose
+from modules.ApplicationGenerator import ApplicationGenerator
 from dotenv import load_dotenv
 from modules.StealthBrowser import StealthBrowser
 from datetime import datetime
@@ -12,11 +13,11 @@ class BaseExposeProcessor:
     name = "BaseProcessor"
     domain = "BaseDomain"
 
-    def __init__(self, email, password, application_text):
+    def __init__(self, email, password):
         self.email = email
         self.password = password
-        self.application_text = application_text
         self.database = ExposeDB
+        self.ApplicationGenerator = ApplicationGenerator()
         self.debug = True
         self._debug_log(f"Processor name: {self.name} initialized!")
 
