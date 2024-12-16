@@ -161,7 +161,7 @@ class Immobilienscout24_processor(BaseExposeProcessor):
                     self.stealth_chrome.random_mouse_movements(login_button)
                     self.stealth_chrome.dismiss_overlays()
                     login_button.click()
-                    logger.nfo("Login submitted successfully.")
+                    logger.info("Login submitted successfully.")
 
                     ## TO-DO validate success
 

@@ -37,6 +37,12 @@ class StealthBrowser(webdriver.Chrome):
         options.add_argument("--disable-notifications")
         options.add_argument("--ignore-certificate-errors")
         options.add_argument("--disable-web-security")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--no-sandbox")
+        # Define the path for cookies storage
+        project_root = os.path.dirname(os.path.abspath(__file__))
+        cookies_folder = os.path.join(project_root, "cookies")
+        #options.add_argument(f"--user-data-dir={cookies_folder}")
         options.add_argument(
             "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
             "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"
