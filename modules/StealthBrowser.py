@@ -3,6 +3,7 @@ import time
 import random
 import base64
 import pickle
+import logging
 from modules.Database import ExposeDB, Expose
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -13,6 +14,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.action_chains import ActionChains
 from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
 
 class StealthBrowser(webdriver.Chrome):
     def __init__(self):
@@ -45,7 +48,7 @@ class StealthBrowser(webdriver.Chrome):
 
     def random_wait(self, min_seconds=2, max_seconds=5):
         wait_time = random.uniform(min_seconds, max_seconds)
-        print(f"Waiting for {wait_time:.2f} seconds...")
+        logging.debug(f"Waiting for {wait_time:.2f} seconds...")
         time.sleep(wait_time)
 
     def safe_find_element(self, by, value):
@@ -60,13 +63,13 @@ class StealthBrowser(webdriver.Chrome):
             offset_x = random.randint(-100, 100)
             offset_y = random.randint(-100, 100)
             action.move_to_element_with_offset(element, offset_x, offset_y).perform()
-            print(f"Moved mouse to offset ({offset_x}, {offset_y})")
+            logging.debug(f"Moved mouse to offset ({offset_x}, {offset_y})")
             self.random_wait(0.5, 1.5)
 
     def random_scroll(self):
         scroll_amount = random.randint(-300, 300)
         self.execute_script(f"window.scrollBy(0, {scroll_amount})")
-        print(f"Scrolled by {scroll_amount} pixels")
+        logging.debug(f"Scrolled by {scroll_amount} pixels")
         self.random_wait(0.5, 1.5)
 
     def perform_random_action(self):
@@ -81,7 +84,7 @@ class StealthBrowser(webdriver.Chrome):
         cookie_file = os.path.join(self.cookies_dir, f"{site_name}_cookies.pkl")
         with open(cookie_file, "wb") as f:
             pickle.dump(self.get_cookies(), f)
-        print(f"Cookies saved for {site_name}.")
+        logging.info(f"Cookies saved for {site_name}.")
 
     def load_cookies(self, site_name):
         cookie_file = os.path.join(self.cookies_dir, f"{site_name}_cookies.pkl")
@@ -92,7 +95,7 @@ class StealthBrowser(webdriver.Chrome):
                     try:
                         self.add_cookie(cookie)
                     except Exception as e:
-                        print(f"Failed to load cookie: {cookie}. Error: {e}")
-            print(f"Cookies loaded for {site_name}.")
+                        logging.debug(f"Failed to load cookie: {cookie}. Error: {e}")
+            logging.info(f"Cookies loaded for {site_name}.")
         else:
-            print(f"No cookies found for {site_name}.")
+            logging.warning(f"No cookies found for {site_name}.")
