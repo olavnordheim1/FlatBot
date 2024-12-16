@@ -12,6 +12,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException
+
 from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
@@ -46,6 +48,7 @@ class StealthBrowser(webdriver.Chrome):
         self.quit()
 
     def wait_for_user(self):
+        time.sleep(5)
         input("Please log in and press Enter to continue...")
 
     def random_wait(self, min_seconds=2, max_seconds=5):
@@ -118,3 +121,15 @@ class StealthBrowser(webdriver.Chrome):
         screenshot_file = os.path.join(capture_dir, f"{file_prefix}_screenshot.jpg")
         self.save_screenshot(screenshot_file)
         logging.warning(f"Screenshot saved: {screenshot_file}")
+
+    def dismiss_overlays(self):
+        """Dismiss known overlays like cookie consent banners."""
+        try:
+            consent_banner = self.find_element(By.ID, "usercentrics-root")
+            if consent_banner.is_displayed():
+                close_button = consent_banner.find_element(By.TAG_NAME, "button")
+                close_button.click()
+                print("Overlay dismissed.")
+        except NoSuchElementException:
+            # Overlay not present, safe to proceed
+            print("No overlay found.")

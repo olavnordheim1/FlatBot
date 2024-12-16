@@ -20,16 +20,16 @@ def init_log():    # Create logs directory if it doesn't exist
     log_file_path = os.path.join(log_dir, log_file)
     logging.basicConfig(filename=log_file_path, level=log_level)
 
+
+def main():
+    init_log()
     # Temporarily add console handler
     console_handler = logging.StreamHandler()
     console_handler.setLevel(log_level)
     formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
-
-
-def main():
-    init_log()
+    
     logger.warning(">----------------------- Flatbot starting! -----------------------<")
     logger.debug('Log started')
     print("Initializing the database...")

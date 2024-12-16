@@ -28,7 +28,7 @@ class Immobilienscout24_processor(BaseExposeProcessor):
         super().__init__(IMMO_EMAIL, IMMO_PASSWORD)
 
         self.immo_page_titles = {
-            "cookie_wall": "Ich bin kein Roboter",
+            "captcha_wall": "Ich bin kein Roboter",
             "offer_expired": "Angebot nicht gefunden4",
             "offer_deactivated": "Angebot wurde deaktiviert",
             "login_page": "Welcome - ImmobilienScout24",
@@ -65,9 +65,9 @@ class Immobilienscout24_processor(BaseExposeProcessor):
         page_title = self.stealth_chrome.title
         logger.info(f"Page title: {page_title}")
         
-
-        if self.immo_page_titles['cookie_wall'] in page_title:
-            logger.warning("Cookie wall detected, waiting for user input.")
+        if self.immo_page_titles['captcha_wall'] in page_title:
+            logger.warning("Captcha detected, waiting for user input.")
+            # TO-DO handle this
             self.stealth_chrome.wait_for_user()
         elif self.immo_page_titles['offer_expired'] in page_title or self.immo_page_titles['offer_deactivated'] in page_title:
             logger.info("Offer expired or deactivated, skipping.")
@@ -82,6 +82,7 @@ class Immobilienscout24_processor(BaseExposeProcessor):
             return Expose, False
 
         self.stealth_chrome.perform_random_action()
+        self._accept_cookies()
         # Could be a good offer, let´s check
         #Can we scrape it?
         Expose, scraped = self._scrape_expose(Expose)
@@ -90,9 +91,11 @@ class Immobilienscout24_processor(BaseExposeProcessor):
 
         # Are we logged in?
         if not self._check_login():
+            self._perform_login()
             return Expose, False
         
         # Can we apply?
+        self._accept_cookies()
         Expose, applied = self._apply_for_offer(Expose)
         if not applied:
             return Expose, False      
@@ -114,6 +117,7 @@ class Immobilienscout24_processor(BaseExposeProcessor):
             return False
         
     def _perform_login(self):
+        self.stealth_chrome.dismiss_overlays()
         try:
             login_link = self.stealth_chrome.find_element(By.CLASS_NAME, "topnavigation__sso-login__middle")
             if login_link and "Anmelden" in login_link.text:
@@ -132,6 +136,7 @@ class Immobilienscout24_processor(BaseExposeProcessor):
                         EC.presence_of_element_located((By.ID, "submit"))
                     )
                     self.stealth_chrome.random_mouse_movements(submit_button)
+                    self.stealth_chrome.dismiss_overlays()
                     submit_button.click()
                     logger.info("Email submission successful, waiting for password field.")
 
@@ -154,6 +159,7 @@ class Immobilienscout24_processor(BaseExposeProcessor):
                         EC.presence_of_element_located((By.ID, "loginOrRegistration"))
                     )
                     self.stealth_chrome.random_mouse_movements(login_button)
+                    self.stealth_chrome.dismiss_overlays()
                     login_button.click()
                     logger.nfo("Login submitted successfully.")
 
@@ -209,10 +215,11 @@ class Immobilienscout24_processor(BaseExposeProcessor):
             message_button = WebDriverWait(self.stealth_chrome, 10).until(
                 EC.presence_of_element_located((By.CLASS_NAME, "Button_button-primary__6QTnx"))
             )
+            self.stealth_chrome.dismiss_overlays()
             message_button.click()
             logger.info("Message button found and clicked successfully.")
         except Exception as e:
-            logger.info("Failed to find or click message button.", e)
+            logger.info("Failed to find or click message button.")
             return Expose, False
 
         self.stealth_chrome.perform_random_action()
@@ -244,12 +251,12 @@ class Immobilienscout24_processor(BaseExposeProcessor):
         logger.info("Application text entered successfully.")
 
         self.stealth_chrome.perform_random_action()
-
         try:
             send_button = WebDriverWait(self.stealth_chrome, 10).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, "button[type='submit'].Button_button-primary__6QTnx"))
             )
             self.stealth_chrome.execute_script("arguments[0].scrollIntoView(true);", send_button)
+            self.stealth_chrome.dismiss_overlays()
             send_button.click()
             logger.info("Submit clicked, waiting for confirmation.")
         except:
@@ -271,47 +278,53 @@ class Immobilienscout24_processor(BaseExposeProcessor):
             return Expose, False
 
     def _accept_cookies(self):
-        """
-        Clicks the 'Accept All' cookie button if present.
-        """
+        if not self.stealth_chrome:
+            logging.error("Stealth browser not initialized.")
+            return
+
         try:
-            # Wait for the button to be clickable
-            button = self.stealth_chrome.wait.until(
-                lambda driver: driver.find_element(By.CSS_SELECTOR, "[data-testid='uc-accept-all-button']")
-            )
+            shadow_root = self.stealth_chrome.find_element(By.CSS_SELECTOR, "#usercentrics-root").shadow_root
+            button = shadow_root.find_element(By.CSS_SELECTOR, "button[data-testid='uc-accept-all-button']")
             self.stealth_chrome.random_mouse_movements(button)
             button.click()
             logging.info("Successfully clicked the 'Accept All' button.")
         except Exception as e:
-            logging.error(f"Failed to click the 'Accept All' button: {e}")
+            logging.error(f"Failed to click the 'Accept All' button: {e}", exc_info=True)
+
 
     def _fill_application_form(self, Expose):
-    # Initialize filling values (customize these as needed)
+        self.stealth_chrome.dismiss_overlays()
+    # Initialize filling values (customize these as needed) #visible values
         form_values = {
             "vonplz": "12045",
             "nachplz": "",
             "message": self.ApplicationGenerator.generate_application(Expose),
-            "salutation": "MALE",
-            "=firstName": "Marco",
+            "salutation": "Herr",
+            "firstName": "Marco",
             "lastName": "Chinello",
             "phoneNumber": "015734813927",
-            "=street": "Sonnenallee",
+            "emailAddress": "flats@marcochinello.com",
+            "street": "Sonnenallee",
             "houseNumber": "71",
             "postcode": "12045",
             "city": "Berlin",
-            "moveInDateType": "Flexible",
-            "numberOfPersons": "1",
-            "has=": "FALSE",
-            "=employmentRelationship": "WORKER",
-            "income": "OVER_2000_UPTO_3000",
-            "applicationPackageCompleted": "TRUE",
-            "sendUserProfile": "TRUE",
-            "hasPets": "FALSE",
-            "sendUser=": "TRUE",
-            "=sendUserProfile": "TRUE"
+            "moveInDateType": "ab sofort",
+            "numberOfPersons": "Einpersonenhaushalt",
+            "has=": "true",
+            "employmentRelationship": "Arbeiter:in",
+            "employmentStatus": "Unbefristet",
+            "income": "2.000 - 3.000 €",
+            "applicationPackageCompleted": "Vorhanden",
+            "hasPets": "Nein",
+            "sendUser=": "true",
+            "sendUserProfile": "true",
+            "numberOfAdults": "1",
+            "numberOfKids": "0",
+            "isRelocationOfferChecked": "false",
         }
 
         for field_name, value in form_values.items():
+
             try:
                 # Attempt to locate the field using various attributes
                 field = self.stealth_chrome.find_element(By.NAME, field_name)
