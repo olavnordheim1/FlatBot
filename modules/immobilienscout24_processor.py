@@ -9,6 +9,7 @@ from modules.StealthBrowser import StealthBrowser
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import Select
 from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
@@ -164,12 +165,12 @@ class Immobilienscout24_processor(BaseExposeProcessor):
                     return True
                 except Exception as e:
                     logger.warning("Login failed.", e)
-                    #browser_helpers.wait_for_user()
+                    #self.stealth_chrome_helpers.wait_for_user()
                     # TO-DO Notify user
                     return False                           
         except Exception:
             logger.debug("Login button not found.", e)
-            #browser_helpers.wait_for_user()
+            #self.stealth_chrome_helpers.wait_for_user()
             # TO-DO Notify user
             return False
         
@@ -239,7 +240,7 @@ class Immobilienscout24_processor(BaseExposeProcessor):
             logger.warning("Message pop-up did not open or message box not found, bad attempt")
             return Expose, False
 
-        message_box.send_keys(self.ApplicationGenerator.generate_application(Expose))
+        self._fill_application_form(Expose)
         logger.debug("Application text entered successfully.")
 
         self.stealth_chrome.perform_random_action()
@@ -285,3 +286,62 @@ class Immobilienscout24_processor(BaseExposeProcessor):
             logging.error(f"Failed to click the 'Accept All' button: {e}")
 
     def _fill_application_form(self, Expose):
+    # Initialize filling values (customize these as needed)
+        form_values = {
+            "vonplz": "12045",
+            "nachplz": "",
+            "message": self.ApplicationGenerator.generate_application(Expose),
+            "salutation": "MALE",
+            "=firstName": "Marco",
+            "lastName": "Chinello",
+            "phoneNumber": "015734813927",
+            "=street": "Sonnenallee",
+            "houseNumber": "71",
+            "postcode": "12045",
+            "city": "Berlin",
+            "moveInDateType": "Flexible",
+            "numberOfPersons": "1",
+            "has=": "FALSE",
+            "=employmentRelationship": "WORKER",
+            "income": "OVER_2000_UPTO_3000",
+            "applicationPackageCompleted": "TRUE",
+            "sendUserProfile": "TRUE",
+            "hasPets": "FALSE",
+            "sendUser=": "TRUE",
+            "=sendUserProfile": "TRUE"
+        }
+
+        for field_name, value in form_values.items():
+            try:
+                # Attempt to locate the field using various attributes
+                field = self.stealth_chrome.find_element(By.NAME, field_name)
+
+                # Simulate human-like mouse movements
+                self.stealth_chrome.random_mouse_movements(field)
+
+                # Handle different field types
+                tag_name = field.tag_name.lower()
+                field_type = field.get_attribute("type").lower() if field.get_attribute("type") else ""
+
+                if tag_name == "input" and field_type in ["text", "email", "tel", "number"]:
+                    field.clear()
+                    field.send_keys(value)
+                    self.stealth_chrome.random_wait()
+                elif tag_name == "textarea":
+                    field.clear()
+                    field.send_keys(value)
+                    self.stealth_chrome.random_wait()
+                elif tag_name == "select":
+                    Select(field).select_by_visible_text(value)
+                    self.stealth_chrome.random_wait()
+                elif tag_name == "input" and field_type == "checkbox":
+                    current_state = field.is_selected()
+                    if value.lower() in ["true", "yes", "1"] and not current_state:
+                        field.click()
+                    elif value.lower() in ["false", "no", "0"] and current_state:
+                        field.click()
+                    self.stealth_chrome.random_wait()
+            except Exception as e:
+                logging.debug(f"Could not fill field '{field_name}': {e}")
+
+        logging.info("Form filling completed.")
