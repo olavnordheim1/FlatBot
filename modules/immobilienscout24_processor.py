@@ -66,9 +66,10 @@ class Immobilienscout24_processor(BaseExposeProcessor):
         logger.info(f"Page title: {page_title}")
         
         if self.immo_page_titles['captcha_wall'] in page_title:
-            logger.warning("Captcha detected, waiting for user input.")
+            logger.warning("Captcha detected.")
+            return Expose, False
             # TO-DO handle this
-            self.stealth_chrome.wait_for_user()
+            #self.stealth_chrome.wait_for_user()
         elif self.immo_page_titles['offer_expired'] in page_title or self.immo_page_titles['offer_deactivated'] in page_title:
             logger.info("Offer expired or deactivated, skipping.")
             Expose.processed = True
@@ -303,6 +304,7 @@ class Immobilienscout24_processor(BaseExposeProcessor):
             ("nachplz", "text", ""),
             ("message", "textarea", self.ApplicationGenerator.generate_application(Expose)),
             ("salutation", "text", "Herr"),
+            ("salutation", "select", "Herr"),
             ("firstName", "text", "Marco"),
             ("lastName", "text", "Chinello"),
             ("phoneNumber", "tel", "015734813927"),

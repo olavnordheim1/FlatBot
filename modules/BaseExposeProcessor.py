@@ -1,4 +1,5 @@
 import logging
+import time
 from modules.Database import ExposeDB
 from modules.Expose import Expose
 from modules.ApplicationGenerator import ApplicationGenerator
@@ -50,9 +51,15 @@ class BaseExposeProcessor:
         logger.info(f"Processing expose: {offer_link}")
         self.stealth_chrome.get(offer_link)
         self.stealth_chrome.load_cookies(self.name)
-        self.stealth_chrome.random_wait()
+        self.stealth_chrome.random_mouse_movements()
+        self.stealth_chrome.random_scroll()
+        time.sleep(1)
         self.stealth_chrome.refresh()
-
+        self.stealth_chrome.random_wait()
+        self.stealth_chrome.random_mouse_movements()
+        self.stealth_chrome.random_scroll()
+        self.stealth_chrome.perform_random_action()
+        self.stealth_chrome.random_scroll()
         max_attempts = 3
         for attempt in range(1, max_attempts + 1):
             logger.info(f"Attempt {attempt}...")           
