@@ -143,3 +143,10 @@ class StealthBrowser(webdriver.Chrome):
         except NoSuchElementException:
             # Overlay not present, safe to proceed
             print("No overlay found.")
+
+    def scroll_to_bottom(self):
+        try:
+            self.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            logging.info("Scrolled to the bottom of the page.")
+        except Exception as e:
+            logging.error(f"Error while scrolling to bottom: {e}")

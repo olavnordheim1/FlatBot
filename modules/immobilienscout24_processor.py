@@ -29,7 +29,7 @@ class Immobilienscout24_processor(BaseExposeProcessor):
 
         self.immo_page_titles = {
             "captcha_wall": "Ich bin kein Roboter",
-            "offer_expired": "Angebot nicht gefunden4",
+            "offer_expired": "Angebot nicht gefunden",
             "offer_deactivated": "Angebot wurde deaktiviert",
             "login_page": "Welcome - ImmobilienScout24",
             "error_page": "Fehler",
@@ -168,7 +168,7 @@ class Immobilienscout24_processor(BaseExposeProcessor):
                     ## TO-DO validate success
 
                     self.stealth_chrome.save_cookies(self.name)
-                    self.stealth_chrome.refresh()
+                    #self.stealth_chrome.refresh()
                     logger.info("Page reloaded after login.")
                     return True
                 except Exception as e:
@@ -294,79 +294,123 @@ class Immobilienscout24_processor(BaseExposeProcessor):
         except Exception as e:
             logging.error(f"Failed to click the 'Accept All' button: {e}", exc_info=True)
 
+def _fill_application_form(self, Expose):
+    self.stealth_chrome.dismiss_overlays()
 
-    def _fill_application_form(self, Expose):
-        self.stealth_chrome.dismiss_overlays()
+    form_values = [
+        ("vonplz", "text", "12045"),
+        ("nachplz", "text", ""),
+        ("message", "textarea", self.ApplicationGenerator.generate_application(Expose)),
+        ("salutation", "text", "Herr"),
+        ("salutation", "select", "Herr"),
+        ("firstName", "text", "Marco"),
+        ("lastName", "text", "Chinello"),
+        ("phoneNumber", "tel", "015734813927"),
+        ("phoneNumber", "text", "015734813927"),
+        ("phoneNumber", "number", "015734813927"),
+        ("emailAddress", "email", "flats@marcochinello.com"),
+        ("emailAddress", "text", "flats@marcochinello.com"),
+        ("street", "text", "Sonnenallee"),
+        ("houseNumber", "text", "71"),
+        ("postcode", "text", "12045"),
+        ("city", "text", "Berlin"),
+        ("moveInDateType", "text", "ab sofort"),
+        ("numberOfPersons", "text", "Einpersonenhaushalt"),
+        ("has=", "checkbox", "true"),
+        ("employmentRelationship", "text", "Arbeiter:in"),
+        ("employmentStatus", "select", "Unbefristet"),
+        ("income", "select", "2.000 - 3.000 €"),
+        ("incomeAmount", "tel", "2.800"),
+        ("applicationPackageCompleted", "text", "Vorhanden"),
+        ("hasPets", "text", "Nein"),
+        ("sendUser=", "checkbox", "true"),
+        ("sendUserProfile", "checkbox", "true"),
+        ("numberOfAdults", "number", "1"),
+        ("numberOfAdults", "tel", "1"),
+        ("numberOfKids", "number", "0"),
+        ("numberOfKids", "tel", "0"),
+        ("isRelocationOfferChecked", "checkbox", "false"),
+        ("rentArrears", "select", "Nein"),
+        ("insolvencyProcess", "select", "Nein"),
+    ]
 
-        # Initialize filling values (customize these as needed)
-        form_values = [
-            ("vonplz", "text", "12045"),
-            ("nachplz", "text", ""),
-            ("message", "textarea", self.ApplicationGenerator.generate_application(Expose)),
-            ("salutation", "text", "Herr"),
-            ("salutation", "select", "Herr"),
-            ("firstName", "text", "Marco"),
-            ("lastName", "text", "Chinello"),
-            ("phoneNumber", "tel", "015734813927"),
-            ("phoneNumber", "text", "015734813927"),
-            ("phoneNumber", "number", "015734813927"),
-            ("emailAddress", "email", "flats@marcochinello.com"),
-            ("emailAddress", "text", "flats@marcochinello.com"),
-            ("street", "text", "Sonnenallee"),
-            ("houseNumber", "text", "71"),
-            ("postcode", "text", "12045"),
-            ("city", "text", "Berlin"),
-            ("moveInDateType", "text", "ab sofort"),
-            ("numberOfPersons", "text", "Einpersonenhaushalt"),
-            ("has=", "checkbox", "true"),
-            ("employmentRelationship", "text", "Arbeiter:in"),
-            ("employmentStatus", "select", "Unbefristet"),
-            ("income", "select", "2.000 - 3.000 €"),
-            ("incomeAmount", "tel", "2.800"),
-            ("applicationPackageCompleted", "text", "Vorhanden"),
-            ("hasPets", "text", "Nein"),
-            ("sendUser=", "checkbox", "true"),
-            ("sendUserProfile", "checkbox", "true"),
-            ("numberOfAdults", "number", "1"),
-            ("numberOfAdults", "tel", "1"),
-            ("numberOfKids", "number", "0"),
-            ("numberOfKids", "tel", "0"),
-            ("isRelocationOfferChecked", "checkbox", "false"),
-            ("rentArrears", "select", "Nein"),
-            ("insolvencyProcess", "select", "Nein"),
-        ]
+    # Scroll and dynamically load all form fields
+    self.stealth_chrome.scroll_to_bottom()
+    fields = self.stealth_chrome.find_elements(By.TAG_NAME, "input") + \
+             self.stealth_chrome.find_elements(By.TAG_NAME, "textarea") + \
+             self.stealth_chrome.find_elements(By.TAG_NAME, "select")
 
-        # Collect all form fields
-        fields = self.stealth_chrome.find_elements(By.TAG_NAME, "input") + \
-                 self.stealth_chrome.find_elements(By.TAG_NAME, "textarea") + \
-                 self.stealth_chrome.find_elements(By.TAG_NAME, "select")
+    # Ignore hidden fields
+    visible_fields = []
+    for field in fields:
+        field_type_attr = field.get_attribute("type")
+        # Determine field_type properly
+        if field.tag_name.lower() == "select":
+            field_type = "select"
+        else:
+            field_type = field_type_attr.lower() if field_type_attr else field.tag_name.lower()
 
-        for field in fields:
-            field_name = field.get_attribute("name")
-            field_type = field.get_attribute("type").lower() if field.get_attribute("type") else field.tag_name.lower()
-            logging.info(f"found field name {field_name} type {field_type}")
-            for name, expected_type, value in form_values:
-                if field_name == name and field_type == expected_type:
-                    try:
-                        # Simulate human-like mouse movements
-                        self.stealth_chrome.random_mouse_movements(field)
+        # Skip hidden fields
+        if field_type == "hidden":
+            continue
 
-                        # Fill the field based on its type
-                        if field_type in ["text", "email", "tel", "number"] or field.tag_name == "textarea":
-                            field.clear()
-                            field.send_keys(value)
-                            self.stealth_chrome.random_wait()
-                        elif field.tag_name == "select":
-                            Select(field).select_by_visible_text(value)
-                            self.stealth_chrome.random_wait()
-                        elif field_type == "checkbox":
-                            current_state = field.is_selected()
-                            if value.lower() in ["true", "yes", "1"] and not current_state:
-                                field.click()
-                            elif value.lower() in ["false", "no", "0"] and current_state:
-                                field.click()
-                            self.stealth_chrome.random_wait()
-                    except Exception as e:
-                        logging.info(f"Could not fill field '{field_name}': {e}")
+        visible_fields.append(field)
 
-        logging.info("Form filling completed.")
+    # Print all found (visible) fields once
+    for field in visible_fields:
+        field_name = field.get_attribute("name")
+        if field.tag_name.lower() == "select":
+            # For selects, we've standardized the type as "select"
+            field_type = "select"
+        else:
+            field_type_attr = field.get_attribute("type")
+            field_type = field_type_attr.lower() if field_type_attr else field.tag_name.lower()
+        logging.info(f"Found field: name={field_name}, type={field_type}")
+
+    # Iterate through fields and match with provided values
+    for field in visible_fields:
+        field_name = field.get_attribute("name")
+        if field.tag_name.lower() == "select":
+            field_type = "select"
+        else:
+            field_type_attr = field.get_attribute("type")
+            field_type = field_type_attr.lower() if field_type_attr else field.tag_name.lower()
+
+        for name, expected_type, value in form_values:
+            if field_name == name and field_type == expected_type:
+                try:
+                    # Scroll to field to ensure visibility
+                    self.stealth_chrome.scroll_to_element(field)
+                    
+                    # Simulate human-like mouse movements
+                    self.stealth_chrome.random_mouse_movements(field)
+
+                    # Fill the field based on its type
+                    if field_type in ["text", "email", "tel", "number"] or field.tag_name == "textarea":
+                        field.clear()
+                        field.send_keys(value)
+                        self.stealth_chrome.random_wait()
+                    elif field_type == "select":
+                        Select(field).select_by_visible_text(value)
+                        self.stealth_chrome.random_wait()
+                    elif field_type == "checkbox":
+                        current_state = field.is_selected()
+                        if value.lower() in ["true", "yes", "1"] and not current_state:
+                            field.click()
+                        elif value.lower() in ["false", "no", "0"] and current_state:
+                            field.click()
+                        self.stealth_chrome.random_wait()
+                except Exception as e:
+                    logging.info(f"Could not fill field '{field_name}': {e}")
+
+    # Recheck for dynamically loaded fields (but do not print them again)
+    self.stealth_chrome.scroll_to_bottom()
+    additional_fields = self.stealth_chrome.find_elements(By.TAG_NAME, "input") + \
+                        self.stealth_chrome.find_elements(By.TAG_NAME, "textarea") + \
+                        self.stealth_chrome.find_elements(By.TAG_NAME, "select")
+
+    # No printing here to ensure fields are printed only once
+    for field in additional_fields:
+        pass  # Just pass without logging
+
+    logging.info("Form filling completed.")

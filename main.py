@@ -68,7 +68,7 @@ def main():
                 logger.error(f"Error processing expose from {expose.source}: {e}")
 
         logger.warning("All new exposes processed.")
-        random_wait(300, 900)
+        random_wait(600, 1200)
 
 def random_wait(min_seconds=2, max_seconds=5):
     wait_time = random.uniform(min_seconds, max_seconds)

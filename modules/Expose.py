@@ -5,7 +5,7 @@ class Expose:
     def __init__(self, expose_id, source=None, title=None, price_kalt=None, price_warm=None, nebekosten=None, 
                  location=None, square_meters=None, number_of_rooms=None, agent_name=None, 
                  real_estate_agency=None, energetic_rating=None, construction_year=None, description=None, 
-                 neighborhood=None, processed=0, failures=0, received_at=None):
+                 neighborhood=None, processed=0, failures=0, received_at=None, scraped_at=None, applied_at = None):
         self.expose_id = expose_id
         self.source = source
         self.title = title
@@ -24,6 +24,8 @@ class Expose:
         self.processed = processed
         self.failures = failures
         self.received_at = received_at or datetime.utcnow()
+        self.scraped_at = scraped_at
+        self.applied_at = applied_at
 
     def update_field(self, field_name, value):
         if hasattr(self, field_name):

@@ -49,21 +49,14 @@ class BaseExposeProcessor:
         expose_id = Expose.expose_id
         offer_link = self._generate_expose_link(Expose)
         logger.info(f"Processing expose: {offer_link}")
-        self.stealth_chrome.get(offer_link)
-        self.stealth_chrome.load_cookies(self.name)
-        self.stealth_chrome.random_mouse_movements()
-        self.stealth_chrome.random_scroll()
-        time.sleep(1)
-        self.stealth_chrome.refresh()
-        self.stealth_chrome.random_wait()
-        self.stealth_chrome.random_mouse_movements()
-        self.stealth_chrome.random_scroll()
-        self.stealth_chrome.perform_random_action()
-        self.stealth_chrome.random_scroll()
         max_attempts = 3
         for attempt in range(1, max_attempts + 1):
-            logger.info(f"Attempt {attempt}...")           
-
+            logger.info(f"Attempt {attempt}...")
+            self.stealth_chrome.get(offer_link)
+            self.stealth_chrome.load_cookies(self.name)
+            self.stealth_chrome.random_wait()
+            self.stealth_chrome.random_scroll()
+            self.stealth_chrome.random_wait()
             if self.stealth_chrome.title != "":
                 Expose, success = self._handle_page(Expose)
                 if Expose.processed == True:
