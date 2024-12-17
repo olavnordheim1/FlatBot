@@ -70,4 +70,5 @@ class BaseExposeProcessor:
             else:
                 logger.info(f"All attempts failed for expose ID {expose_id}.")
                 Expose.failures += 1
+                self.stealth_chrome.kill()
                 return Expose, False

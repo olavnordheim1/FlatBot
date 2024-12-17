@@ -378,10 +378,7 @@ class Immobilienscout24_processor(BaseExposeProcessor):
 
             for name, expected_type, value in form_values:
                 if field_name == name and field_type == expected_type:
-                    try:
-                        # Scroll to field to ensure visibility
-                        self.stealth_chrome.scroll_to_element(field)
-                        
+                    try:                        
                         # Simulate human-like mouse movements
                         self.stealth_chrome.random_mouse_movements(field)
 
