@@ -296,67 +296,75 @@ class Immobilienscout24_processor(BaseExposeProcessor):
 
     def _fill_application_form(self, Expose):
         self.stealth_chrome.dismiss_overlays()
-    # Initialize filling values (customize these as needed) #visible values
-        form_values = {
-            "vonplz": "12045",
-            "nachplz": "",
-            "message": self.ApplicationGenerator.generate_application(Expose),
-            "salutation": "Herr",
-            "firstName": "Marco",
-            "lastName": "Chinello",
-            "phoneNumber": "015734813927",
-            "emailAddress": "flats@marcochinello.com",
-            "street": "Sonnenallee",
-            "houseNumber": "71",
-            "postcode": "12045",
-            "city": "Berlin",
-            "moveInDateType": "ab sofort",
-            "numberOfPersons": "Einpersonenhaushalt",
-            "has=": "true",
-            "employmentRelationship": "Arbeiter:in",
-            "employmentStatus": "Unbefristet",
-            "income": "2.000 - 3.000 €",
-            "applicationPackageCompleted": "Vorhanden",
-            "hasPets": "Nein",
-            "sendUser=": "true",
-            "sendUserProfile": "true",
-            "numberOfAdults": "1",
-            "numberOfKids": "0",
-            "isRelocationOfferChecked": "false",
-        }
 
-        for field_name, value in form_values.items():
+        # Initialize filling values (customize these as needed)
+        form_values = [
+            ("vonplz", "text", "12045"),
+            ("nachplz", "text", ""),
+            ("message", "textarea", self.ApplicationGenerator.generate_application(Expose)),
+            ("salutation", "text", "Herr"),
+            ("firstName", "text", "Marco"),
+            ("lastName", "text", "Chinello"),
+            ("phoneNumber", "tel", "015734813927"),
+            ("phoneNumber", "text", "015734813927"),
+            ("phoneNumber", "number", "015734813927"),
+            ("emailAddress", "email", "flats@marcochinello.com"),
+            ("emailAddress", "text", "flats@marcochinello.com"),
+            ("street", "text", "Sonnenallee"),
+            ("houseNumber", "text", "71"),
+            ("postcode", "text", "12045"),
+            ("city", "text", "Berlin"),
+            ("moveInDateType", "text", "ab sofort"),
+            ("numberOfPersons", "text", "Einpersonenhaushalt"),
+            ("has=", "checkbox", "true"),
+            ("employmentRelationship", "text", "Arbeiter:in"),
+            ("employmentStatus", "select", "Unbefristet"),
+            ("income", "select", "2.000 - 3.000 €"),
+            ("incomeAmount", "tel", "2.800"),
+            ("applicationPackageCompleted", "text", "Vorhanden"),
+            ("hasPets", "text", "Nein"),
+            ("sendUser=", "checkbox", "true"),
+            ("sendUserProfile", "checkbox", "true"),
+            ("numberOfAdults", "number", "1"),
+            ("numberOfAdults", "tel", "1"),
+            ("numberOfKids", "number", "0"),
+            ("numberOfKids", "tel", "0"),
+            ("isRelocationOfferChecked", "checkbox", "false"),
+            ("rentArrears", "select", "Nein"),
+            ("insolvencyProcess", "select", "Nein"),
+        ]
 
-            try:
-                # Attempt to locate the field using various attributes
-                field = self.stealth_chrome.find_element(By.NAME, field_name)
+        # Collect all form fields
+        fields = self.stealth_chrome.find_elements(By.TAG_NAME, "input") + \
+                 self.stealth_chrome.find_elements(By.TAG_NAME, "textarea") + \
+                 self.stealth_chrome.find_elements(By.TAG_NAME, "select")
 
-                # Simulate human-like mouse movements
-                self.stealth_chrome.random_mouse_movements(field)
+        for field in fields:
+            field_name = field.get_attribute("name")
+            field_type = field.get_attribute("type").lower() if field.get_attribute("type") else field.tag_name.lower()
+            logging.info(f"found field name {field_name} type {field_type}")
+            for name, expected_type, value in form_values:
+                if field_name == name and field_type == expected_type:
+                    try:
+                        # Simulate human-like mouse movements
+                        self.stealth_chrome.random_mouse_movements(field)
 
-                # Handle different field types
-                tag_name = field.tag_name.lower()
-                field_type = field.get_attribute("type").lower() if field.get_attribute("type") else ""
-
-                if tag_name == "input" and field_type in ["text", "email", "tel", "number"]:
-                    field.clear()
-                    field.send_keys(value)
-                    self.stealth_chrome.random_wait()
-                elif tag_name == "textarea":
-                    field.clear()
-                    field.send_keys(value)
-                    self.stealth_chrome.random_wait()
-                elif tag_name == "select":
-                    Select(field).select_by_visible_text(value)
-                    self.stealth_chrome.random_wait()
-                elif tag_name == "input" and field_type == "checkbox":
-                    current_state = field.is_selected()
-                    if value.lower() in ["true", "yes", "1"] and not current_state:
-                        field.click()
-                    elif value.lower() in ["false", "no", "0"] and current_state:
-                        field.click()
-                    self.stealth_chrome.random_wait()
-            except Exception as e:
-                logging.info(f"Could not fill field '{field_name}': {e}")
+                        # Fill the field based on its type
+                        if field_type in ["text", "email", "tel", "number"] or field.tag_name == "textarea":
+                            field.clear()
+                            field.send_keys(value)
+                            self.stealth_chrome.random_wait()
+                        elif field.tag_name == "select":
+                            Select(field).select_by_visible_text(value)
+                            self.stealth_chrome.random_wait()
+                        elif field_type == "checkbox":
+                            current_state = field.is_selected()
+                            if value.lower() in ["true", "yes", "1"] and not current_state:
+                                field.click()
+                            elif value.lower() in ["false", "no", "0"] and current_state:
+                                field.click()
+                            self.stealth_chrome.random_wait()
+                    except Exception as e:
+                        logging.info(f"Could not fill field '{field_name}': {e}")
 
         logging.info("Form filling completed.")
