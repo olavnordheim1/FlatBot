@@ -44,30 +44,28 @@ def main():
         time.sleep(2)
         logger.info("Starting processor...")
         exposes = db_instance.get_unprocessed_exposes()
-        if not exposes:
+        if  exposes:
+            for expose in exposes:
+                try:
+                    processor_module = importlib.import_module(f"modules.{expose.source}_processor")
+                    processor_class = getattr(processor_module, f"{expose.source}_processor", None)
+                    if not processor_class:
+                        logger.error(f"Processor class for {expose.source} not found")
+                        continue
+                    processor_instance = processor_class()
+                    expose, success = processor_instance.process_expose(expose)
+                    if success:
+                        db_instance.update_expose(expose)
+                        logger.warning("Expose processed and updated")
+                except ModuleNotFoundError:
+                    logger.error(f"Processor module for {expose.source} not found")
+                except AttributeError as e:
+                    logger.error(f"Error accessing processor class: {e}")
+                except Exception as e:
+                    logger.error(f"Error processing expose from {expose.source}: {e}")
+            logger.warning("All new exposes processed.")
+        else:
             logger.warning("No unprocessed exposes found.")
-            return
-        for expose in exposes:
-            try:
-                processor_module = importlib.import_module(f"modules.{expose.source}_processor")
-                processor_class = getattr(processor_module, f"{expose.source}_processor", None)
-                if not processor_class:
-                    logger.error(f"Processor class for {expose.source} not found")
-                    continue
-
-                processor_instance = processor_class()
-                expose, success = processor_instance.process_expose(expose)
-                if success:
-                    db_instance.update_expose(expose)
-                    logger.warning("Expose processed and updated")
-            except ModuleNotFoundError:
-                logger.error(f"Processor module for {expose.source} not found")
-            except AttributeError as e:
-                logger.error(f"Error accessing processor class: {e}")
-            except Exception as e:
-                logger.error(f"Error processing expose from {expose.source}: {e}")
-
-        logger.warning("All new exposes processed.")
         random_wait(600, 1200)
 
 def random_wait(min_seconds=2, max_seconds=5):

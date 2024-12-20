@@ -277,16 +277,6 @@ class Immobilienscout24_processor(BaseExposeProcessor):
             logger.warning("Failed to send message or fill the form.", e)
             return Expose, False
 
-    def _accept_cookies(self):
-        try:
-            shadow_root = self.stealth_chrome.find_element(By.CSS_SELECTOR, "#usercentrics-root").shadow_root
-            button = shadow_root.find_element(By.CSS_SELECTOR, "button[data-testid='uc-accept-all-button']")
-            self.stealth_chrome.random_mouse_movements(button)
-            button.click()
-            logging.info("Successfully clicked the 'Accept All' button.")
-        except:
-            logging.info("Failed to click the 'Accept All' button")
-
     def _fill_application_form(self, Expose):
         self.stealth_chrome.dismiss_overlays()
 
@@ -412,7 +402,18 @@ class Immobilienscout24_processor(BaseExposeProcessor):
 
         logging.info("Form filling completed.")
 
+    def _accept_cookies(self):
+        try:
+            shadow_root = self.stealth_chrome.find_element(By.CSS_SELECTOR, "#usercentrics-root").shadow_root
+            button = shadow_root.find_element(By.CSS_SELECTOR, "button[data-testid='uc-accept-all-button']")
+            self.stealth_chrome.random_mouse_movements(button)
+            button.click()
+            logging.info("Successfully clicked the 'Accept All' button.")
+        except:
+            logging.info("Failed to click the 'Accept All' button")
+
     def _handle_captcha(self):
         logger.warning("Captcha detected.")
-        self.stealth_chrome.dismiss_overlays()
+        #self.stealth_chrome.dismiss_overlays()
         self.stealth_chrome.random_wait(1,3)
+        self.stealth_chrome.wait_for_user()

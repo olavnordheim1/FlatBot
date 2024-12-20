@@ -32,6 +32,10 @@ class StealthBrowser(webdriver.Chrome):
         os.makedirs(self.logs_dir, exist_ok=True)
 
         options = Options()
+        # Set the custom Chrome binary location
+        options.binary_location = r"Chrome installers\chrome-win64\chrome-win64\chrome.exe"
+
+        # Add your options
         options.add_argument("--disable-blink-features=AutomationControlled")
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option("useAutomationExtension", False)
@@ -40,25 +44,27 @@ class StealthBrowser(webdriver.Chrome):
         options.add_argument("--disable-notifications")
         options.add_argument("--ignore-certificate-errors")
         options.add_argument("--disable-web-security")
-        # Define the path for cookies storage
-        #project_root = os.path.dirname(os.path.abspath(__file__))
-        #cookies_folder = os.path.join(project_root, "cookies")
-        #user_data_dir = ('C:/Users/flatmaster/AppData/Local/Google/Chrome/User Data')
-        #options.add_argument("--user-data-dir={}".format(user_data_dir))
-        #options.add_argument('--user-data-dir=C:/Users/flatmaster/AppData/Local/Google/Chrome/User Data')
-        #options.add_argument('--profile-directory=Default')
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--disable-extensions")
+        #ptions.add_argument(f'--user-data-dir={self.cookies_dir}')
         options.add_argument(
             "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
             "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"
         )
-        super().__init__(service=Service(ChromeDriverManager().install()), options=options)
+
+        # Use ChromeDriverManager to install and set up the driver service
+        driver_service = Service(ChromeDriverManager().install())
+
+        # Initialize the WebDriver with the specified service and options
+        super().__init__(service=driver_service, options=options)
+
         self.maximize_window()
 
     def kill(self):
         self.quit()
 
     def wait_for_user(self):
-        time.sleep(5)
+        #self.execute_script("window.stop();")
         input("Please log in and press Enter to continue...")
 
     def random_wait(self, min_seconds=2, max_seconds=5):

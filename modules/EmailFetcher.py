@@ -39,9 +39,19 @@ class EmailFetcher:
                 module = importlib.import_module(f"{modules_dir}.{module_name[:-3]}")
                 for attr in dir(module):
                     processor_class = getattr(module, attr)
-                    if isinstance(processor_class, type) and issubclass(processor_class, BaseExposeProcessor) and processor_class is not BaseExposeProcessor:
-                        instance = processor_class()
-                        processors[instance.get_domain()] = instance
+                    # Check if it's a subclass of BaseExposeProcessor and not BaseExposeProcessor itself
+                    if (
+                        isinstance(processor_class, type) 
+                        and issubclass(processor_class, BaseExposeProcessor) 
+                        and processor_class is not BaseExposeProcessor
+                    ):
+                        # Since domain is a class attribute, we can access it directly
+                        if hasattr(processor_class, 'domain'):
+                            domain = processor_class.domain
+                            processors[domain] = processor_class
+                            logger.info(f"Registered processor class for domain: {domain}")
+                        else:
+                            logger.warning(f"Processor {processor_class.__name__} does not have a 'domain' attribute.")
                 logging.info("Imported " + module_name)
         return processors
 
@@ -76,21 +86,25 @@ class EmailFetcher:
                     subject = email_message["Subject"]
                     sender = email_message["From"]
                     body = self.get_email_body(email_message)
-                    logger.info("Processing email from " + sender + "Subject: " + subject)
+                    logger.info("Processing email from " + sender + " Subject: " + subject)
                     if body:
-                        for domain, processor in self.processors.items():
+                        # Iterate over class-based processors
+                        for domain, processor_class in self.processors.items():
                             if domain in sender:
-                                expose_ids = processor.extract_expose_link(subject, body)
+                                # Call the static method directly on the class
+                                expose_ids = processor_class.extract_expose_link(subject, body)
                                 if expose_ids:
                                     for expose_id in expose_ids:
                                         if not self.db.expose_exists(expose_id):
                                             new_expose = Expose(
                                                 expose_id=expose_id, 
-                                                source=processor.get_name()
+                                                source=processor_class.name
                                             )
                                             self.db.insert_expose(new_expose)
                                             new_exposes += 1
-                                            logging.info(f"Inserted expose {expose_id} into the database with source '{processor.get_name()}'.")
+                                            logging.info(
+                                                f"Inserted expose {expose_id} into the database with source '{processor_class.name}'."
+                                            )
                                         else:
                                             logging.info(f"Expose {expose_id} already exists.")
                                     if self.delete_emails_after_processing:

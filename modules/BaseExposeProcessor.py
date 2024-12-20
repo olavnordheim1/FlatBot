@@ -47,7 +47,7 @@ class BaseExposeProcessor:
     #Returns updated Expose object
     def process_expose(self, Expose):
         logger.info(f"Processing expose: {Expose.expose_id}")
-        max_attempts = 3
+        max_attempts = 4
         for attempt in range(1, max_attempts + 1):
             logger.info(f"Attempt {attempt}...")
             offer_link = self._generate_expose_link(Expose)
