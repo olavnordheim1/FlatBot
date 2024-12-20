@@ -60,6 +60,7 @@ class BaseExposeProcessor:
             Expose, success = self._handle_page(Expose)
             if Expose.processed == True:
                 logger.warning(f"Attempt {attempt} succeeded!")
+                self.stealth_chrome.kill()
                 return Expose, True
             else:
                 logger.info(f"Attempt {attempt} failed.")
