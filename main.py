@@ -41,7 +41,7 @@ def main():
         logger.info("Fetching emails...")
         new_exposes = email_processor.fetch_emails()
         logger.warning(f"Email fetching completed! Found {new_exposes} new exposes")
-
+        time.sleep(2)
         logger.info("Starting processor...")
         exposes = db_instance.get_unprocessed_exposes()
         if not exposes:

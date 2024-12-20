@@ -19,17 +19,16 @@ class EmailFetcher:
         self.db = db if db else ExposeDB()
 
         # Decoded email credentials
-        self.email_user = base64.b64decode(os.getenv("EMAIL_USER")).decode("utf-8")
+        self.email_user = os.getenv("EMAIL_USER")
         self.email_password = base64.b64decode(os.getenv("EMAIL_PASSWORD")).decode("utf-8")
         self.pop3_server = os.getenv("EMAIL_SERVER")
-        self.pop3_port = os.getenv("EMAIL_PORT")
+        self.pop3_port = int(os.getenv("EMAIL_PORT"))
+
         # Control Features
-        self.delete_emails_after_processing = False
+        self.delete_emails_after_processing = os.getenv("EMAIL_DELETE")
         # Load processors dynamically
         self.processors = self.load_processors()
-        # Filter Keywords
-        self.subject_filter = [keyword.strip() for keyword in os.getenv("SUBJECT_FILTER", "").split(",")]
-            
+   
     def load_processors(self):
         logging.info("Emailfetcher loading processors...")
         processors = {}
@@ -60,6 +59,7 @@ class EmailFetcher:
     def fetch_emails(self):
         logging.info("Fetching emails...")
         new_exposes = 0
+        logging.info(f"Connecting to {self.pop3_server}:{self.pop3_port} with user {self.email_user}")
         try:
             mailbox = poplib.POP3_SSL(self.pop3_server, self.pop3_port)
             mailbox.user(self.email_user)
