@@ -14,6 +14,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException
+from selenium_stealth import stealth
 
 from dotenv import load_dotenv
 
@@ -47,17 +48,27 @@ class StealthBrowser(webdriver.Chrome):
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-extensions")
         #ptions.add_argument(f'--user-data-dir={self.cookies_dir}')
-        options.add_argument(
-            "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"
-        )
+        #options.add_argument(
+        #    "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        #    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"
+        #)
 
         # Use ChromeDriverManager to install and set up the driver service
         driver_service = Service(ChromeDriverManager().install())
 
         # Initialize the WebDriver with the specified service and options
         super().__init__(service=driver_service, options=options)
+        stealth ( 
+            self,
+            languages=["de", "en-US", "en"],
+            vendor="Google Inc.",
+            platform="Win64",
+            webgl_vendor="Intel Inc.",
+            renderer="Intel Iris OpenGL Engine",
+            fix_hairline=True,
+            )
 
+        
         self.maximize_window()
 
     def kill(self):
