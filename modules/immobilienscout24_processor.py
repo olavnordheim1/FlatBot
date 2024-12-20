@@ -129,7 +129,7 @@ class Immobilienscout24_processor(BaseExposeProcessor):
                     email_field = WebDriverWait(self.stealth_chrome, 10).until(
                         EC.presence_of_element_located((By.ID, "username"))
                     )
-                    email_field.send_keys(self.email)
+                    self.stealth_chrome.send_keys_human_like(email_field, self.email)
                     logger.info("Email entered successfully.")
                     self.stealth_chrome.perform_random_action()
 
@@ -145,7 +145,7 @@ class Immobilienscout24_processor(BaseExposeProcessor):
                     password_field = WebDriverWait(self.stealth_chrome, 10).until(
                         EC.presence_of_element_located((By.ID, "password"))
                     )
-                    password_field.send_keys(self.password)
+                    self.stealth_chrome.send_keys_human_like(password_field, self.password)
                     logger.info("Password entered successfully.")
                     self.stealth_chrome.perform_random_action()
 
@@ -385,7 +385,7 @@ class Immobilienscout24_processor(BaseExposeProcessor):
                         # Fill the field based on its type
                         if field_type in ["text", "email", "tel", "number"] or field.tag_name == "textarea":
                             field.clear()
-                            field.send_keys(value)
+                            self.stealth_chrome.send_keys_human_like(field, value)
                             self.stealth_chrome.random_wait()
                         elif field_type == "select":
                             Select(field).select_by_visible_text(value)

@@ -21,8 +21,8 @@ class EmailFetcher:
         # Decoded email credentials
         self.email_user = base64.b64decode(os.getenv("EMAIL_USER")).decode("utf-8")
         self.email_password = base64.b64decode(os.getenv("EMAIL_PASSWORD")).decode("utf-8")
-        self.pop3_server = "pop3s.aruba.it"
-        self.pop3_port = 995
+        self.pop3_server = os.getenv("EMAIL_SERVER")
+        self.pop3_port = os.getenv("EMAIL_PORT")
         # Control Features
         self.delete_emails_after_processing = False
         # Load processors dynamically
@@ -59,6 +59,7 @@ class EmailFetcher:
 
     def fetch_emails(self):
         logging.info("Fetching emails...")
+        new_exposes = 0
         try:
             mailbox = poplib.POP3_SSL(self.pop3_server, self.pop3_port)
             mailbox.user(self.email_user)
@@ -87,6 +88,7 @@ class EmailFetcher:
                                                 source=processor.get_name()
                                             )
                                             self.db.insert_expose(new_expose)
+                                            new_exposes += 1
                                             logging.info(f"Inserted expose {expose_id} into the database with source '{processor.get_name()}'.")
                                         else:
                                             logging.info(f"Expose {expose_id} already exists.")
@@ -101,3 +103,4 @@ class EmailFetcher:
 
         except Exception as e:
             logging.error(f"Error: {str(e)}")
+        return new_exposes

@@ -150,3 +150,8 @@ class StealthBrowser(webdriver.Chrome):
             logging.info("Scrolled to the bottom of the page.")
         except Exception as e:
             logging.error(f"Error while scrolling to bottom: {e}")
+
+    def send_keys_human_like(self, field, value, min_delay=0.1, max_delay=0.3):
+        for char in value:
+            field.send_keys(char)
+            time.sleep(random.uniform(min_delay, max_delay))

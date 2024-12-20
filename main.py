@@ -36,11 +36,11 @@ def main():
     print("Initializing the database...")
     db_instance = ExposeDB()
     logger.info("Database initialized successfully!")
-    logger.info("Fetching emails...")
     email_processor = EmailFetcher(db_instance)
     while True:
-        email_processor.fetch_emails()
-        logger.info("Email fetching completed!")
+        logger.info("Fetching emails...")
+        new_exposes = email_processor.fetch_emails()
+        logger.warning(f"Email fetching completed! Found {new_exposes} new exposes")
 
         logger.info("Starting processor...")
         exposes = db_instance.get_unprocessed_exposes()
