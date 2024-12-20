@@ -16,7 +16,7 @@ def init_log():    # Create logs directory if it doesn't exist
     os.makedirs(log_dir, exist_ok=True)
     # Generate log file name
     current_time = datetime.now()
-    log_file = f"Flatbot_{current_time.month}_{current_time.year}.log"
+    log_file = f"Flatbot_{current_time.day}_{current_time.month}_{current_time.year}.log"
     log_file_path = os.path.join(log_dir, log_file)
     # Configure root logger
     logging.basicConfig(

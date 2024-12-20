@@ -25,7 +25,8 @@ class EmailFetcher:
         self.pop3_port = int(os.getenv("EMAIL_PORT"))
 
         # Control Features
-        self.delete_emails_after_processing = os.getenv("EMAIL_DELETE")
+        self.delete_emails_after_processing = os.getenv("EMAIL_DELETE", "False").lower() == "true"
+
         # Load processors dynamically
         self.processors = self.load_processors()
    

@@ -62,14 +62,6 @@ class Immobilienscout24_processor(BaseExposeProcessor):
 
     #Returns updated Expose object, called in process_expose
     def _handle_page(self, Expose):
-        offer_link = self._generate_expose_link(Expose)
-        logger.info(f"Processing expose: {offer_link}")
-        self.stealth_chrome.get(offer_link)
-        self.stealth_chrome.load_cookies(self.name)
-        self.stealth_chrome.random_wait()
-        self.stealth_chrome.random_scroll()
-        self.stealth_chrome.random_wait()
-        
         page_title = self.stealth_chrome.title
         logger.info(f"Page title: {page_title}")
         
@@ -87,7 +79,6 @@ class Immobilienscout24_processor(BaseExposeProcessor):
         elif self.immo_page_titles['error_page'] in page_title or self.immo_page_titles['home_page'] in page_title:
             logger.warning("Error or landed on home page, skipping.")
             return Expose, False
-
         self.stealth_chrome.perform_random_action()
         self._accept_cookies()
         # Could be a good offer, let´s check
