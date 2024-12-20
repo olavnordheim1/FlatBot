@@ -62,14 +62,20 @@ class Immobilienscout24_processor(BaseExposeProcessor):
 
     #Returns updated Expose object, called in process_expose
     def _handle_page(self, Expose):
+        offer_link = self._generate_expose_link(Expose)
+        logger.info(f"Processing expose: {offer_link}")
+        self.stealth_chrome.get(offer_link)
+        self.stealth_chrome.load_cookies(self.name)
+        self.stealth_chrome.random_wait()
+        self.stealth_chrome.random_scroll()
+        self.stealth_chrome.random_wait()
+        
         page_title = self.stealth_chrome.title
         logger.info(f"Page title: {page_title}")
         
         if self.immo_page_titles['captcha_wall'] in page_title:
-            logger.warning("Captcha detected.")
+            self._handle_captcha()
             return Expose, False
-            # TO-DO handle this
-            #self.stealth_chrome.wait_for_user()
         elif self.immo_page_titles['offer_expired'] in page_title or self.immo_page_titles['offer_deactivated'] in page_title:
             logger.info("Offer expired or deactivated, skipping.")
             Expose.processed = True
@@ -281,18 +287,14 @@ class Immobilienscout24_processor(BaseExposeProcessor):
             return Expose, False
 
     def _accept_cookies(self):
-        if not self.stealth_chrome:
-            logging.error("Stealth browser not initialized.")
-            return
-
         try:
             shadow_root = self.stealth_chrome.find_element(By.CSS_SELECTOR, "#usercentrics-root").shadow_root
             button = shadow_root.find_element(By.CSS_SELECTOR, "button[data-testid='uc-accept-all-button']")
             self.stealth_chrome.random_mouse_movements(button)
             button.click()
             logging.info("Successfully clicked the 'Accept All' button.")
-        except Exception as e:
-            logging.error(f"Failed to click the 'Accept All' button: {e}", exc_info=True)
+        except:
+            logging.info("Failed to click the 'Accept All' button")
 
     def _fill_application_form(self, Expose):
         self.stealth_chrome.dismiss_overlays()
@@ -411,3 +413,8 @@ class Immobilienscout24_processor(BaseExposeProcessor):
             pass  # Just pass without logging
 
         logging.info("Form filling completed.")
+
+    def _handle_captcha(self):
+        logger.warning("Captcha detected.")
+        self.stealth_chrome.dismiss_overlays()
+        self.stealth_chrome.random_wait(1,3)

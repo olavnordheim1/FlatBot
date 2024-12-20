@@ -46,29 +46,22 @@ class BaseExposeProcessor:
 
     #Returns updated Expose object
     def process_expose(self, Expose):
-        expose_id = Expose.expose_id
-        offer_link = self._generate_expose_link(Expose)
-        logger.info(f"Processing expose: {offer_link}")
         max_attempts = 3
         for attempt in range(1, max_attempts + 1):
             logger.info(f"Attempt {attempt}...")
-            self.stealth_chrome.get(offer_link)
-            self.stealth_chrome.load_cookies(self.name)
-            self.stealth_chrome.random_wait()
-            self.stealth_chrome.random_scroll()
-            self.stealth_chrome.random_wait()
+
             if self.stealth_chrome.title != "":
                 Expose, success = self._handle_page(Expose)
                 if Expose.processed == True:
-                    logger.info(f"Attempt {attempt} succeeded!")
+                    logger.warning(f"Attempt {attempt} succeeded!")
                     return Expose, True
                 else:
                     logger.info(f"Attempt {attempt} failed.")
             if attempt < max_attempts:
                 logger.info("Retrying...\n")
-                self.stealth_chrome.random_wait()
+                self.stealth_chrome.random_wait(5,20)
             else:
-                logger.info(f"All attempts failed for expose ID {expose_id}.")
+                logger.warning(f"All attempts failed.")
                 Expose.failures += 1
                 self.stealth_chrome.kill()
                 return Expose, False
