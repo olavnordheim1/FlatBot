@@ -6,6 +6,8 @@ import importlib
 import logging
 from modules.Database import ExposeDB, Expose
 from modules.EmailFetcher import EmailFetcher
+from modules.StealthBrowser import StealthBrowser
+
 
 
 logger = logging.getLogger(__name__)
@@ -45,6 +47,7 @@ def main():
         logger.info("Starting processor...")
         exposes = db_instance.get_unprocessed_exposes()
         if  exposes:
+            stealth_chrome = StealthBrowser()
             for expose in exposes:
                 try:
                     processor_module = importlib.import_module(f"modules.{expose.source}_processor")
@@ -52,7 +55,7 @@ def main():
                     if not processor_class:
                         logger.error(f"Processor class for {expose.source} not found")
                         continue
-                    processor_instance = processor_class()
+                    processor_instance = processor_class(stealth_chrome)
                     expose, success = processor_instance.process_expose(expose)
                     if success:
                         db_instance.update_expose(expose)
@@ -64,6 +67,7 @@ def main():
                 except Exception as e:
                     logger.error(f"Error processing expose from {expose.source}: {e}")
             logger.warning("All new exposes processed.")
+            stealth_chrome.kill()
         else:
             logger.warning("No unprocessed exposes found.")
         random_wait(600, 1200)

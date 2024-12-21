@@ -47,11 +47,11 @@ class StealthBrowser(webdriver.Chrome):
         options.add_argument("--disable-web-security")
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-extensions")
-        #ptions.add_argument(f'--user-data-dir={self.cookies_dir}')
-        #options.add_argument(
-        #    "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        #    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"
-        #)
+        #options.add_argument(f'--user-data-dir={self.cookies_dir}')
+        options.add_argument(
+            "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        )
 
         # Use ChromeDriverManager to install and set up the driver service
         driver_service = Service(ChromeDriverManager().install())
@@ -72,6 +72,7 @@ class StealthBrowser(webdriver.Chrome):
         self.maximize_window()
 
     def kill(self):
+        logging.info("Killing browser")
         self.quit()
 
     def wait_for_user(self):

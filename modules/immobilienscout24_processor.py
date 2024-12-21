@@ -18,14 +18,14 @@ class Immobilienscout24_processor(BaseExposeProcessor):
     name = "Immobilienscout24"
     domain = "immobilienscout24.de"
 
-    def __init__(self):
+    def __init__(self, stealthbrowser):
    
         # Load environment variables
         load_dotenv()
         IMMO_EMAIL = base64.b64decode(os.getenv("IMMO_EMAIL")).decode("utf-8")
         IMMO_PASSWORD = base64.b64decode(os.getenv("IMMO_PASSWORD")).decode("utf-8")
 
-        super().__init__(IMMO_EMAIL, IMMO_PASSWORD)
+        super().__init__(IMMO_EMAIL, IMMO_PASSWORD, stealthbrowser)
 
         self.immo_page_titles = {
             "captcha_wall": "Ich bin kein Roboter",

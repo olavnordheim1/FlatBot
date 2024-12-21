@@ -16,10 +16,10 @@ class BaseExposeProcessor:
     domain = "BaseDomain"
     ApplicationGenerator = ApplicationGenerator()
 
-    def __init__(self, email, password):
+    def __init__(self, email, password, stealthbrowser):
         self.email = email
         self.password = password
-        self.stealth_chrome = StealthBrowser()
+        self.stealth_chrome: StealthBrowser = stealthbrowser
         
 
     def get_name(self):
@@ -60,7 +60,6 @@ class BaseExposeProcessor:
             Expose, success = self._handle_page(Expose)
             if Expose.processed == True:
                 logger.warning(f"Attempt {attempt} succeeded!")
-                self.stealth_chrome.kill()
                 return Expose, True
             else:
                 logger.info(f"Attempt {attempt} failed.")
@@ -70,5 +69,4 @@ class BaseExposeProcessor:
             else:
                 logger.warning(f"All attempts failed.")
                 Expose.failures += 1
-                self.stealth_chrome.kill()
                 return Expose, False
