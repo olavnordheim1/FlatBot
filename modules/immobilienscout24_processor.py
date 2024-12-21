@@ -11,7 +11,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select
 
-from modules.recaptcha_v2 import RecaptchaV2Solver
 from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
@@ -428,8 +427,7 @@ class Immobilienscout24_processor(BaseExposeProcessor):
             except:
                 logging.info("Failed to find show captcha")
             logging.info("Loading solver")
-            solver = RecaptchaV2Solver(self.stealth_chrome)
-            solver.solve_captcha(url = ())
+
         except:
             logging.warning("Failed to find shadow root")
 

@@ -13,6 +13,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException
 from selenium_stealth import stealth
 
@@ -47,7 +48,12 @@ class StealthBrowser(webdriver.Chrome):
         options.add_argument("--disable-web-security")
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-extensions")
-        #options.add_argument(f'--user-data-dir={self.cookies_dir}')
+        options.add_argument("--remote-debugging-port=9222")
+        # Enable performance logging
+        capabilities = DesiredCapabilities.CHROME
+        capabilities["goog:loggingPrefs"] = {"performance": "ALL"}
+        # Combine options with capabilities
+        options.set_capability("goog:loggingPrefs", {"performance": "ALL"})
         options.add_argument(
             "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
             "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
