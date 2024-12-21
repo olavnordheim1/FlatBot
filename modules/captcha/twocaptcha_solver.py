@@ -50,7 +50,7 @@ class TwoCaptchaSolver(CaptchaSolver):
     def solve_amazon(self, image):
         logging.info("Trying to solve amazon.")
         solver = TwoCaptcha(self.api_key, defaultTimeout=60, pollingInterval=5)
-        result = solver.coordinates(image, lang='en')
+        result = solver.coordinates(image, lang='de') #
         return result
 
     @backoff.on_exception(**CaptchaSolver.backoff_options)

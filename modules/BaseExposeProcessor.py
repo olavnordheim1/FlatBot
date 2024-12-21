@@ -6,6 +6,8 @@ from modules.ApplicationGenerator import ApplicationGenerator
 from dotenv import load_dotenv
 from modules.StealthBrowser import StealthBrowser
 from datetime import datetime
+from selenium.webdriver.support.ui import WebDriverWait
+
 
 logger = logging.getLogger(__name__)
 
@@ -53,9 +55,13 @@ class BaseExposeProcessor:
             offer_link = self._generate_expose_link(Expose)
             self.stealth_chrome.get(offer_link)
             self.stealth_chrome.load_cookies(self.name)
-            StealthBrowser.random_wait()
-            self.stealth_chrome.random_scroll()
-            StealthBrowser.random_wait()
+            # Explicit wait for the title to not be empty
+            WebDriverWait(self.stealth_chrome, 10).until(
+                lambda d: d.title.strip() != ""
+            )
+            #StealthBrowser.random_wait()
+            #self.stealth_chrome.random_scroll()
+            #StealthBrowser.random_wait()
 
             Expose, success = self._handle_page(Expose)
             if Expose.processed == True:
