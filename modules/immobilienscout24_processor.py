@@ -10,6 +10,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select
+
+from modules.recaptcha_v2 import RecaptchaV2Solver
 from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
@@ -122,7 +124,7 @@ class Immobilienscout24_processor(BaseExposeProcessor):
                 logger.info("User not logged in. Attempting login.")
                 login_link.click()
                 try:
-                    self.stealth_chrome.random_wait()
+                    StealthBrowser.random_wait()
                     email_field = WebDriverWait(self.stealth_chrome, 10).until(
                         EC.presence_of_element_located((By.ID, "username"))
                     )
@@ -138,7 +140,7 @@ class Immobilienscout24_processor(BaseExposeProcessor):
                     submit_button.click()
                     logger.info("Email submission successful, waiting for password field.")
 
-                    self.stealth_chrome.random_wait()
+                    StealthBrowser.random_wait()
                     password_field = WebDriverWait(self.stealth_chrome, 10).until(
                         EC.presence_of_element_located((By.ID, "password"))
                     )
@@ -160,7 +162,7 @@ class Immobilienscout24_processor(BaseExposeProcessor):
                     self.stealth_chrome.dismiss_overlays()
                     login_button.click()
                     logger.info("Login submitted successfully.")
-                    self.stealth_chrome.random_wait(5,10)
+                    StealthBrowser.random_wait(5,10)
 
                     ## TO-DO validate success
 
@@ -236,7 +238,7 @@ class Immobilienscout24_processor(BaseExposeProcessor):
             return Expose, True
 
         try:
-            self.stealth_chrome.random_wait()
+            StealthBrowser.random_wait()
             message_label = WebDriverWait(self.stealth_chrome, 10).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, "label[for='message']"))
             )
@@ -376,17 +378,17 @@ class Immobilienscout24_processor(BaseExposeProcessor):
                         if field_type in ["text", "email", "tel", "number"] or field.tag_name == "textarea":
                             field.clear()
                             self.stealth_chrome.send_keys_human_like(field, value)
-                            self.stealth_chrome.random_wait()
+                            StealthBrowser.random_wait()
                         elif field_type == "select":
                             Select(field).select_by_visible_text(value)
-                            self.stealth_chrome.random_wait()
+                            StealthBrowser.random_wait()
                         elif field_type == "checkbox":
                             current_state = field.is_selected()
                             if value.lower() in ["true", "yes", "1"] and not current_state:
                                 field.click()
                             elif value.lower() in ["false", "no", "0"] and current_state:
                                 field.click()
-                            self.stealth_chrome.random_wait()
+                            StealthBrowser.random_wait()
                     except Exception as e:
                         logging.info(f"Could not fill field '{field_name}': {e}")
 
@@ -414,6 +416,33 @@ class Immobilienscout24_processor(BaseExposeProcessor):
 
     def _handle_captcha(self):
         logger.warning("Captcha detected.")
+        logger.info("Trying show challenge")
+
+        try:
+            shadow_root = self.stealth_chrome.find_element(By.CSS_SELECTOR, "#captcha-container > awswaf-captcha").shadow_root ##captcha-container > awswaf-captcha
+            try:
+                button = shadow_root.find_element(By.CSS_SELECTOR, "#reqBtn")
+                self.stealth_chrome.random_mouse_movements(button)
+                button.click()
+                logging.info("Successfully clicked show captcha.")
+            except:
+                logging.info("Failed to find show captcha")
+            logging.info("Loading solver")
+            solver = RecaptchaV2Solver(self.stealth_chrome)
+            solver.solve_captcha(url = ())
+        except:
+            logging.warning("Failed to find shadow root")
+
+        # Wait for the element to be clickable using its XPath
+        #wait = WebDriverWait(self.stealth_chrome, 10)
+        #wait.until(EC.frame_to_be_available_and_switch_to_it((By.XPATH, "iframe xpath")))
+        #click_to_verify = wd.find_element_by_xpath('//*[@id="1e505deed3832c02c96ca5abe70df9ab"]/div')
+        #click_to_verify.click()
+        #button = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@id='reqBtn']")))
+        # Click the button
+        #button.click()
+
+        
         #self.stealth_chrome.dismiss_overlays()
-        self.stealth_chrome.random_wait(1,3)
+        StealthBrowser.random_wait(1,3)
         self.stealth_chrome.wait_for_user()

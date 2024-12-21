@@ -77,9 +77,10 @@ class StealthBrowser(webdriver.Chrome):
 
     def wait_for_user(self):
         #self.execute_script("window.stop();")
-        input("Please log in and press Enter to continue...")
+        input("Waiting for user, press Enter to continue...")
 
-    def random_wait(self, min_seconds=2, max_seconds=5):
+    @staticmethod
+    def random_wait(min_seconds=2, max_seconds=5):
         wait_time = random.uniform(min_seconds, max_seconds)
         logging.info(f"Waiting for {wait_time:.2f} seconds...")
         time.sleep(wait_time)

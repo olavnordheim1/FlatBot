@@ -1,7 +1,6 @@
 import os
 import time
 from datetime import datetime
-import random
 import importlib
 import logging
 from modules.Database import ExposeDB, Expose
@@ -70,12 +69,7 @@ def main():
             stealth_chrome.kill()
         else:
             logger.warning("No unprocessed exposes found.")
-        random_wait(600, 1200)
-
-def random_wait(min_seconds=2, max_seconds=5):
-    wait_time = random.uniform(min_seconds, max_seconds)
-    logger.info(f"Waiting for {wait_time:.2f} seconds...")
-    time.sleep(wait_time)
+        StealthBrowser.random_wait(600, 1200)
 
 ############################################################
 if __name__ == "__main__":

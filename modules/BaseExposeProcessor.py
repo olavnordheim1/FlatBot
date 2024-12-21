@@ -53,9 +53,9 @@ class BaseExposeProcessor:
             offer_link = self._generate_expose_link(Expose)
             self.stealth_chrome.get(offer_link)
             self.stealth_chrome.load_cookies(self.name)
-            self.stealth_chrome.random_wait()
+            StealthBrowser.random_wait()
             self.stealth_chrome.random_scroll()
-            self.stealth_chrome.random_wait()
+            StealthBrowser.random_wait()
 
             Expose, success = self._handle_page(Expose)
             if Expose.processed == True:
@@ -65,7 +65,7 @@ class BaseExposeProcessor:
                 logger.info(f"Attempt {attempt} failed.")
             if attempt < max_attempts:
                 logger.info("Retrying...\n")
-                self.stealth_chrome.random_wait(5,20)
+                StealthBrowser.random_wait(5,20)
             else:
                 logger.warning(f"All attempts failed.")
                 Expose.failures += 1
