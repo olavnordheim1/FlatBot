@@ -49,11 +49,13 @@ class StealthBrowser(webdriver.Chrome):
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-extensions")
         options.add_argument("--remote-debugging-port=9222")
+        options.add_argument(r"--user-data-dir=C:\Users\flatmaster\AppData\Local\Google\Chrome for Testing\User Data\Default")
+
         # Enable performance logging
-        capabilities = DesiredCapabilities.CHROME
-        capabilities["goog:loggingPrefs"] = {"performance": "ALL"}
+        #capabilities = DesiredCapabilities.CHROME
+        #capabilities["goog:loggingPrefs"] = {"performance": "ALL"}
         # Combine options with capabilities
-        options.set_capability("goog:loggingPrefs", {"performance": "ALL"})
+        #options.set_capability("goog:loggingPrefs", {"performance": "ALL"})
         options.add_argument(
             "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
             "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
@@ -66,7 +68,7 @@ class StealthBrowser(webdriver.Chrome):
         super().__init__(service=driver_service, options=options)
         stealth ( 
             self,
-            languages=["de", "en-US", "en"],
+            languages=["en-US", "en"], #["de", "en-US", "en"],
             vendor="Google Inc.",
             platform="Win64",
             webgl_vendor="Intel Inc.",

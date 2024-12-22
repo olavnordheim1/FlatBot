@@ -53,8 +53,9 @@ class BaseExposeProcessor:
         for attempt in range(1, max_attempts + 1):
             logger.info(f"Attempt {attempt}...")
             offer_link = self._generate_expose_link(Expose)
+            #self.stealth_chrome.get("about:blank")
+            #self.stealth_chrome.load_cookies(self.name)
             self.stealth_chrome.get(offer_link)
-            self.stealth_chrome.load_cookies(self.name)
             # Explicit wait for the title to not be empty
             WebDriverWait(self.stealth_chrome, 10).until(
                 lambda d: d.title.strip() != ""

@@ -66,7 +66,7 @@ class Immobilienscout24_processor(BaseExposeProcessor):
     def _handle_page(self, Expose):
         page_title = self.stealth_chrome.title
         logger.info(f"Page title: {page_title}")
-        #self._accept_cookies()
+        self._accept_cookies()
         if self.immo_page_titles['captcha_wall'] in page_title:
             self._handle_captcha()
             #return Expose, False
@@ -175,7 +175,7 @@ class Immobilienscout24_processor(BaseExposeProcessor):
 
                     ## TO-DO validate success
 
-                    self.stealth_chrome.save_cookies(self.name)
+                    #self.stealth_chrome.save_cookies(self.name)
                     #self.stealth_chrome.refresh()
                     logger.info("Page reloaded after login.")
                     return True
@@ -458,30 +458,56 @@ class Immobilienscout24_processor(BaseExposeProcessor):
         attempts = 0
         max_attempts = 3
         while (attempts < max_attempts):
-            try:
-                shadow_root = self.stealth_chrome.find_element(By.CSS_SELECTOR, "#captcha-container > awswaf-captcha").shadow_root ##captcha-container > awswaf-captcha
-                try:
-                    button = shadow_root.find_element(By.CSS_SELECTOR, "#reqBtn")
-                    self.stealth_chrome.random_mouse_movements(button)
-                    button.click()
-                    logging.info("Successfully clicked show captcha.")
-                except:
-                    logging.info("Failed to find show captcha")
-                logging.info("Loading solver")
-            except:
-                logging.warning("Failed to find shadow root")
-
+            #try:
+            #    shadow_root = self.stealth_chrome.find_element(By.CSS_SELECTOR, "#captcha-container > awswaf-captcha").shadow_root ##captcha-container > awswaf-captcha
+            #    try:
+            #        button = shadow_root.find_element(By.CSS_SELECTOR, "#reqBtn")
+            #        self.stealth_chrome.random_mouse_movements(button)
+            #        button.click()
+            #        logging.info("Successfully clicked show captcha.")
+            #    except:
+            #        logging.info("Failed to find show captcha")
+            #    
+            #except:
+            #    logging.warning("Failed to find shadow root")
+            logging.info("Loading solver")
             tester = CaptchaTester()
-            success = tester.solve_captcha_on_page(self.stealth_chrome)
-            if success:
+            try:
+                captcha_type = tester.detect_captcha(self.stealth_chrome)
+                if not captcha_type:
+                    logger.info("No CAPTCHA detected.")
+                    return True  # No captcha => success
+
+                logger.info(f"Detected CAPTCHA type: {captcha_type}")
+                captcha_data = tester.get_captcha_data(captcha_type, self.stealth_chrome)
+                solution = tester.solve_captcha(
+                    captcha_type,
+                    captcha_data,
+                    self.stealth_chrome,
+                    self.stealth_chrome.current_url
+                )
+                tester.solve_captcha(captcha_type,captcha_data, self.stealth_chrome, self.stealth_chrome.current_url )
+
+                if captcha_type == "geetest":
+                    extra_data = captcha_data.get("data")
+                    tester.inject_solution(captcha_type, self.stealth_chrome, solution, extra_data)
+                else:
+                    tester.inject_solution(captcha_type, self.stealth_chrome, solution)
+                
+            except Exception as e:
+                logger.error(f"Error while solving CAPTCHA: {e}", exc_info=True)
+                return False
+            if tester.validate_solution(captcha_type, self.stealth_chrome):
+                logger.info("CAPTCHA solved successfully.")
                 logging.info("Captcha was solved or not present.")
-                self.stealth_chrome.save_cookies(self.name)
+                #self.stealth_chrome.save_cookies(self.name)
                 return True
             elif attempts > max_attempts:
                 logging.error("all attempts failed)")
                 return False
             else:
                 logging.error("Failed to solve captcha, retrying...")
+                self.stealth_chrome.refresh()
                 attempts += 1
 
         StealthBrowser.random_wait(1,3)

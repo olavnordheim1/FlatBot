@@ -12,6 +12,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support.ui import Select
 from io import BytesIO
 from modules.captcha.twocaptcha_solver import TwoCaptchaSolver
 
@@ -133,19 +134,26 @@ class CaptchaTester:
                 driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
                 sleep(1)
 
-                ## Possibly interacting with the <select> to reveal the puzzle
-                #select_el = my_img.find_element(By.TAG_NAME, "select")
-                #select_el.click()
-                #sleep(1)
-                #select_el.send_keys(Keys.DOWN)  # or any needed key to adjust
-                #sleep(1)
-
-                # Take screenshot from shadow root
+                # Access shadow root
                 shadow_element = driver.execute_script(
                     "return document.querySelector('awswaf-captcha').shadowRoot"
                 )
                 my_img = shadow_element.find_element(By.ID, "root")
                 size = my_img.size
+
+                # Possibly interacting with the <select> to reveal the puzzle
+                select_l = my_img.find_element(By.TAG_NAME, "select")
+                Select(select_l).select_by_visible_text("English")
+
+                sleep(3)
+                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                sleep(1)
+
+                # Take screenshot
+                shadow_element = driver.execute_script(
+                    "return document.querySelector('awswaf-captcha').shadowRoot"
+                )
+                my_img = shadow_element.find_element(By.ID, "root")
                 screenshot = my_img.screenshot_as_png
 
                 # Encode screenshot
@@ -156,52 +164,45 @@ class CaptchaTester:
                 result = self.captcha_solver.solve_amazon(base64_screenshot)
 
                 # We'll do the clicks right here
-                logger.info(f"Solver returned: {result['code']}")
-                # Example solver format: 'ok: x=123,y=45; x=200,y=99'
+                logger.info(result['code'])
+                # Example format from solver: 'ok: x=123,y=45; x=200,y=99'
                 coords_str = result['code'].split(':')[1].split(';')
                 coords_list = [
                     [int(val.split('=')[1]) for val in coord.split(',')]
                     for coord in coords_str
                 ]
                 # Append final coords for some "submit" region (example)
-                button_coord = [size['width'] - 30, size['height'] - 30]
-                coords_list.append(button_coord)
+                #button_coord = [size['width'] - 30, size['height'] - 30]
+                #coords_list.append(button_coord)
 
                 actions = ActionChains(driver)
                 for (x_coord, y_coord) in coords_list:
-                    # Offsetting from the puzzle's top-left corner
+                    # Offsetting from top-left of the puzzle
                     actions.move_to_element_with_offset(my_img, x_coord - 160, y_coord - 211).click()
                     actions.perform()
-                    sleep(0.25)
+                    sleep(0.5)
                     actions.reset_actions()
 
-                sleep(0.5)
+                sleep(1)
                 try:
-                    confirm_button = WebDriverWait(driver, 10).until(
-                        EC.element_to_be_clickable((By.ID, "amzn-btn-verify-internal"))
-                    )
-
-                    actions.move_to_element_with_offset(confirm_button, 0, 0).click()
+                    confirm_button = my_img.find_element(By.ID, "amzn-btn-verify-internal")
+                    actions.move_to_element_with_offset(confirm_button, 40, 15).click()
                     actions.perform()
-                    sleep(1)
+                    sleep(4)
                 except:
-                    logging.error("Unable to press confirm button!")
+                    return False
 
-                # Check if captcha is still present
                 try:
                     driver.find_element(By.TAG_NAME, "awswaf-captcha")
-                    logger.error("Captcha unsolvable or still present.")
+                    logger.error("Captcha unsolvable or still present")
+                    return False
                 except:
-                    logger.info("AWS WAF Captcha solved.")
+                    logger.info("Captcha solved")
+                    return True
 
-            except Exception as e:
-                logger.error(f"AWS WAF solving error: {e}", exc_info=True)
-                driver.refresh()
-
-            # Return None or a custom object
-            return None
-
-        return None
+            except:
+                return False
+        return False
 
     def inject_solution(self, captcha_type, driver, solution, extra_data=None):
         """
@@ -269,4 +270,6 @@ class CaptchaTester:
         if self.validate_solution(captcha_type, driver):
             logger.info("CAPTCHA solved successfully.")
             return True
+        else:
+            return False
 
