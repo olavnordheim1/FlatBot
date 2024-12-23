@@ -3,7 +3,7 @@ import time
 from datetime import datetime
 import importlib
 import logging
-from modules.Database import ExposeDB, Expose
+from modules.database import ExposeDB, Expose
 from modules.EmailFetcher import EmailFetcher
 from modules.StealthBrowser import StealthBrowser
 

@@ -107,102 +107,107 @@ class CaptchaTester:
         Calls the appropriate solver function based on captcha_type.
         For AWS WAF, handles screenshot & clicks directly.
         """
-        if captcha_type == "geetest":
-            # Solve using your GeeTest solver
-            return self.captcha_solver.solve_geetest(
-                data["geetest"], 
-                data["challenge"], 
-                page_url
-            )
+        try:
+            if captcha_type == "geetest":
+                return self.captcha_solver.solve_geetest(
+                    data["geetest"], 
+                    data["challenge"], 
+                    page_url
+                )
 
-        elif captcha_type == "recaptcha":
-            # Solve using your reCAPTCHA solver
-            return self.captcha_solver.solve_recaptcha(
-                data["sitekey"], 
-                page_url
-            )
+            elif captcha_type == "recaptcha":
+                return self.captcha_solver.solve_recaptcha(
+                    data["sitekey"], 
+                    page_url
+                )
 
-        elif captcha_type == "awswaf":
-            """
-            Resolve Amazon WAF Captcha:
-            1) Scroll to puzzle
-            2) Take screenshot
-            3) Send to solver
-            4) Perform clicks with Selenium
-            """
+            elif captcha_type == "awswaf":
+                return self.solve_awswaf_captcha(driver)
+
+        except Exception as e:
+            logger.error(f"Error solving {captcha_type} CAPTCHA: {e}", exc_info=True)
+            return False
+
+        return False
+
+    def solve_awswaf_captcha(self, driver):
+        """
+        Resolve Amazon WAF Captcha:
+        1) Scroll to puzzle
+        2) Take screenshot
+        3) Send to solver
+        4) Perform clicks with Selenium
+        """
+        try:
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            sleep(1)
+
+            # Access shadow root
+            shadow_element = driver.execute_script(
+                "return document.querySelector('awswaf-captcha').shadowRoot"
+            )
+            my_img = shadow_element.find_element(By.ID, "root")
+            size = my_img.size
+
+            # Possibly interacting with the <select> to reveal the puzzle
+            select_l = my_img.find_element(By.TAG_NAME, "select")
+            Select(select_l).select_by_visible_text("English")
+
+            sleep(3)
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            sleep(1)
+
+            # Take screenshot
+            shadow_element = driver.execute_script(
+                "return document.querySelector('awswaf-captcha').shadowRoot"
+            )
+            my_img = shadow_element.find_element(By.ID, "root")
+            screenshot = my_img.screenshot_as_png
+
+            # Encode screenshot
+            screenshot_bytes = BytesIO(screenshot)
+            base64_screenshot = base64.b64encode(screenshot_bytes.getvalue()).decode('utf-8')
+
+            # Solve via your Amazon solver (which returns coords)
+            result = self.captcha_solver.solve_amazon(base64_screenshot)
+
+            # We'll do the clicks right here
+            logger.info(result['code'])
+            # Example format from solver: 'ok: x=123,y=45; x=200,y=99'
+            coords_str = result['code'].split(':')[1].split(';')
+            coords_list = [
+                [int(val.split('=')[1]) for val in coord.split(',')]
+                for coord in coords_str
+            ]
+
+            actions = ActionChains(driver)
+            for (x_coord, y_coord) in coords_list:
+                # Offsetting from top-left of the puzzle
+                actions.move_to_element_with_offset(my_img, x_coord - 160, y_coord - 211).click()
+                actions.perform()
+                sleep(0.5)
+                actions.reset_actions()
+
+            sleep(1)
             try:
-                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-                sleep(1)
-
-                # Access shadow root
-                shadow_element = driver.execute_script(
-                    "return document.querySelector('awswaf-captcha').shadowRoot"
-                )
-                my_img = shadow_element.find_element(By.ID, "root")
-                size = my_img.size
-
-                # Possibly interacting with the <select> to reveal the puzzle
-                select_l = my_img.find_element(By.TAG_NAME, "select")
-                Select(select_l).select_by_visible_text("English")
-
-                sleep(3)
-                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-                sleep(1)
-
-                # Take screenshot
-                shadow_element = driver.execute_script(
-                    "return document.querySelector('awswaf-captcha').shadowRoot"
-                )
-                my_img = shadow_element.find_element(By.ID, "root")
-                screenshot = my_img.screenshot_as_png
-
-                # Encode screenshot
-                screenshot_bytes = BytesIO(screenshot)
-                base64_screenshot = base64.b64encode(screenshot_bytes.getvalue()).decode('utf-8')
-
-                # Solve via your Amazon solver (which returns coords)
-                result = self.captcha_solver.solve_amazon(base64_screenshot)
-
-                # We'll do the clicks right here
-                logger.info(result['code'])
-                # Example format from solver: 'ok: x=123,y=45; x=200,y=99'
-                coords_str = result['code'].split(':')[1].split(';')
-                coords_list = [
-                    [int(val.split('=')[1]) for val in coord.split(',')]
-                    for coord in coords_str
-                ]
-                # Append final coords for some "submit" region (example)
-                #button_coord = [size['width'] - 30, size['height'] - 30]
-                #coords_list.append(button_coord)
-
-                actions = ActionChains(driver)
-                for (x_coord, y_coord) in coords_list:
-                    # Offsetting from top-left of the puzzle
-                    actions.move_to_element_with_offset(my_img, x_coord - 160, y_coord - 211).click()
-                    actions.perform()
-                    sleep(0.5)
-                    actions.reset_actions()
-
-                sleep(1)
-                try:
-                    confirm_button = my_img.find_element(By.ID, "amzn-btn-verify-internal")
-                    actions.move_to_element_with_offset(confirm_button, 40, 15).click()
-                    actions.perform()
-                    sleep(4)
-                except:
-                    return False
-
-                try:
-                    driver.find_element(By.TAG_NAME, "awswaf-captcha")
-                    logger.error("Captcha unsolvable or still present")
-                    return False
-                except:
-                    logger.info("Captcha solved")
-                    return True
-
+                confirm_button = my_img.find_element(By.ID, "amzn-btn-verify-internal")
+                actions.move_to_element_with_offset(confirm_button, 40, 15).click()
+                actions.perform()
+                sleep(4)
             except:
                 return False
-        return False
+
+            try:
+                driver.find_element(By.TAG_NAME, "awswaf-captcha")
+                logger.error("Captcha unsolvable or still present")
+                return False
+            except:
+                logger.info("Captcha solved")
+                return True
+
+        except Exception as e:
+            logger.error(f"Error solving AWS WAF CAPTCHA: {e}", exc_info=True)
+            return False
 
     def inject_solution(self, captcha_type, driver, solution, extra_data=None):
         """

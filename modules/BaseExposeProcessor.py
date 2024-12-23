@@ -1,6 +1,6 @@
 import logging
 import time
-from modules.Database import ExposeDB
+from modules.database import ExposeDB
 from modules.Expose import Expose
 from modules.ApplicationGenerator import ApplicationGenerator
 from dotenv import load_dotenv
