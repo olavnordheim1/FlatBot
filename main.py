@@ -3,7 +3,7 @@ import time
 from datetime import datetime
 import importlib
 import logging
-from modules.database import ExposeDB, Expose
+from modules.Database import ExposeDB, Expose
 from modules.EmailFetcher import EmailFetcher
 from modules.StealthBrowser import StealthBrowser
 
@@ -69,7 +69,7 @@ def main():
             stealth_chrome.kill()
         else:
             logger.warning("No unprocessed exposes found.")
-        StealthBrowser.random_wait(600, 1200)
+        StealthBrowser.random_wait(200, 400)
 
 ############################################################
 if __name__ == "__main__":

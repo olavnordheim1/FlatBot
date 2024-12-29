@@ -379,6 +379,9 @@ class Immobilienscout24_processor(BaseExposeProcessor):
                 # Match field name and type
                 if field_name == name and field_type == expected_type:
                     try:
+                        # Scroll this element into view before interacting
+                        self.stealth_chrome.execute_script("arguments[0].scrollIntoView({block: 'center'});", field)
+                        StealthBrowser.random_wait(0.5, 1)  # give time to settle
                         self.stealth_chrome.random_mouse_movements(field)
 
                         if field_type in ["text", "email", "tel", "number"] or field.tag_name.lower() == "textarea":
@@ -396,7 +399,7 @@ class Immobilienscout24_processor(BaseExposeProcessor):
                                 field.click()
                             elif value.lower() in ["false", "no", "0"] and current_state:
                                 field.click()
-                            StealthBrowser.random_wait()
+                            StealthBrowser.random_wait(1,3)
 
                     except Exception as e:
                         logger.warning(f"Could not fill field '{field_name}' (type={field_type}): {e}")

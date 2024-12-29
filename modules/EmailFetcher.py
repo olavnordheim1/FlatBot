@@ -7,7 +7,7 @@ import logging
 from email import parser
 from email.message import EmailMessage
 from dotenv import load_dotenv
-from modules.database import ExposeDB
+from modules.Database import ExposeDB
 from modules.Expose import Expose
 from modules.BaseExposeProcessor import BaseExposeProcessor
 
