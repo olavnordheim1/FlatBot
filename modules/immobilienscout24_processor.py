@@ -2,6 +2,7 @@ import os
 import base64
 import re
 import logging
+import datetime
 from modules.Expose import Expose
 from modules.BaseExposeProcessor import BaseExposeProcessor
 from modules.StealthBrowser import StealthBrowser
@@ -192,31 +193,34 @@ class Immobilienscout24_processor(BaseExposeProcessor):
 
     def _scrape_expose(self, Expose):
         # Check title
-        try:
-            offer_title = self.stealth_chrome.safe_find_element(By.ID, "expose-title")
+        if Expose.scraped_at is None:
+            logger.info(f"Scraping Expose {Expose.expose_id}")
+            try:
+                offer_title = self.stealth_chrome.safe_find_element(By.ID, "expose-title")
 
-            if offer_title != "Unknown":
-                logger.info("Found Offer title, scriping the rest.")
-                Expose.location = self.stealth_chrome.safe_find_element(By.CLASS_NAME, "zip-region-and-country")
-                Expose.agent_name = self.stealth_chrome.safe_find_element(By.CLASS_NAME, "truncateChild_5TDve")
-                Expose.real_estate_agency = self.stealth_chrome.safe_find_element(By.CSS_SELECTOR, "p[data-qa='company-name']")
-                Expose.price_kalt = self.stealth_chrome.safe_find_element(By.CLASS_NAME, "is24-preis-value")
-                Expose.square_meters = self.stealth_chrome.safe_find_element(By.CLASS_NAME, "is24qa-wohnflaeche-main")
-                Expose.number_of_rooms = self.stealth_chrome.safe_find_element(By.CLASS_NAME, "is24qa-zi-main")
-                Expose.nebekosten = self.stealth_chrome.safe_find_element(By.CLASS_NAME, "is24qa-nebenkosten")
-                Expose.price_warm = self.stealth_chrome.safe_find_element(By.CSS_SELECTOR, "dd.is24qa-gesamtmiete")
-                Expose.construction_year = self.stealth_chrome.safe_find_element(By.CLASS_NAME, "is24qa-baujahr")
-                Expose.description = self.stealth_chrome.safe_find_element(By.CLASS_NAME, "is24qa-objektbeschreibung")
-                Expose.neighborhood = self.stealth_chrome.safe_find_element(By.CLASS_NAME, "is24qa-lage")
+                if offer_title != "Unknown":
+                    logger.info("Found Offer title, scriping the rest.")
+                    Expose.location = self.stealth_chrome.safe_find_element(By.CLASS_NAME, "zip-region-and-country")
+                    Expose.agent_name = self.stealth_chrome.safe_find_element(By.CLASS_NAME, "truncateChild_5TDve")
+                    Expose.real_estate_agency = self.stealth_chrome.safe_find_element(By.CSS_SELECTOR, "p[data-qa='company-name']")
+                    Expose.price_kalt = self.stealth_chrome.safe_find_element(By.CLASS_NAME, "is24-preis-value")
+                    Expose.square_meters = self.stealth_chrome.safe_find_element(By.CLASS_NAME, "is24qa-wohnflaeche-main")
+                    Expose.number_of_rooms = self.stealth_chrome.safe_find_element(By.CLASS_NAME, "is24qa-zi-main")
+                    Expose.nebekosten = self.stealth_chrome.safe_find_element(By.CLASS_NAME, "is24qa-nebenkosten")
+                    Expose.price_warm = self.stealth_chrome.safe_find_element(By.CSS_SELECTOR, "dd.is24qa-gesamtmiete")
+                    Expose.construction_year = self.stealth_chrome.safe_find_element(By.CLASS_NAME, "is24qa-baujahr")
+                    Expose.description = self.stealth_chrome.safe_find_element(By.CLASS_NAME, "is24qa-objektbeschreibung")
+                    Expose.neighborhood = self.stealth_chrome.safe_find_element(By.CLASS_NAME, "is24qa-lage")
+                    Expose.scraped_at = datetime.utcnow()
+                    logger.info(f"Expose {Expose.expose_id} scraped to database.")
+                    self.stealth_chrome.perform_random_action()
+                    return Expose, True
                 
-                logger.info(f"Expose {Expose.expose_id} scraped to database.")
-                self.stealth_chrome.perform_random_action()
-                return Expose, True
-            
-        except Exception:
-            logger.warning("Not valid offer title found, bad attempt!")
-            return Expose, False
-        
+            except Exception:
+                logger.warning("Not valid offer title found, bad attempt!")
+                return Expose, False
+        else:
+            logger.info(f"Expose {Expose.expose_id} already scraped")
 
     def _apply_for_offer(self, Expose):
         logger.info("Trying application...")
@@ -279,6 +283,7 @@ class Immobilienscout24_processor(BaseExposeProcessor):
             # moved in process_expose
             #database.mark_expose_as_processed(expose_id)
             logger.info(f"Expose {Expose.expose_id} applied succesfully.")
+            Expose.applied_at = datetime.utcnow()
             Expose.processed = True
             # TO-DO Notify user?
             return Expose, True
