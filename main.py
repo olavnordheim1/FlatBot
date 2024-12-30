@@ -56,8 +56,8 @@ def main():
                         continue
                     processor_instance = processor_class(stealth_chrome)
                     expose, success = processor_instance.process_expose(expose)
+                    db_instance.update_expose(expose)
                     if success:
-                        db_instance.update_expose(expose)
                         logger.warning("Expose processed and updated")
                 except ModuleNotFoundError:
                     logger.error(f"Processor module for {expose.source} not found")

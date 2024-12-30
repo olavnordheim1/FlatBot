@@ -2,7 +2,7 @@ import os
 import base64
 import re
 import logging
-import datetime
+from datetime import datetime
 from modules.Expose import Expose
 from modules.BaseExposeProcessor import BaseExposeProcessor
 from modules.StealthBrowser import StealthBrowser
@@ -193,6 +193,7 @@ class Immobilienscout24_processor(BaseExposeProcessor):
 
     def _scrape_expose(self, Expose):
         # Check title
+        logger.info(f"Fetched scraped_at from DB: {Expose.scraped_at}, Type: {type(Expose.scraped_at)}")
         if Expose.scraped_at is None:
             logger.info(f"Scraping Expose {Expose.expose_id}")
             try:
@@ -200,6 +201,7 @@ class Immobilienscout24_processor(BaseExposeProcessor):
 
                 if offer_title != "Unknown":
                     logger.info("Found Offer title, scriping the rest.")
+                    logger.info(f"Scrape time: {datetime.utcnow()}")
                     Expose.location = self.stealth_chrome.safe_find_element(By.CLASS_NAME, "zip-region-and-country")
                     Expose.agent_name = self.stealth_chrome.safe_find_element(By.CLASS_NAME, "truncateChild_5TDve")
                     Expose.real_estate_agency = self.stealth_chrome.safe_find_element(By.CSS_SELECTOR, "p[data-qa='company-name']")
@@ -215,12 +217,14 @@ class Immobilienscout24_processor(BaseExposeProcessor):
                     logger.info(f"Expose {Expose.expose_id} scraped to database.")
                     self.stealth_chrome.perform_random_action()
                     return Expose, True
-                
+                else:
+                    logger.warning("No valid offer title found!")
             except Exception:
-                logger.warning("Not valid offer title found, bad attempt!")
+                logger.warning("Scrape failed, bad attempt!")
                 return Expose, False
         else:
             logger.info(f"Expose {Expose.expose_id} already scraped")
+            return Expose, True
 
     def _apply_for_offer(self, Expose):
         logger.info("Trying application...")
